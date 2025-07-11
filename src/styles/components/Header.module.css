@@ -1,0 +1,84 @@
+/* Header Component Styles */
+.header {
+  background: var(--card-background);
+  box-shadow: var(--shadow-md);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 0 var(--spacing-md);
+  width: 100%;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  height: var(--header-height);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.logoIcon {
+  font-size: var(--font-size-title);
+}
+
+.logoText {
+  margin: 0;
+  color: var(--primary-color);
+  font-size: var(--font-size-xxl);
+  font-weight: 600;
+}
+
+.searchContainer {
+  flex: 1;
+  max-width: 500px;
+  margin: 0 var(--spacing-xl);
+}
+
+.searchInput {
+  width: 100%;
+}
+
+.navigation {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.menu {
+  border: none;
+  background: transparent;
+}
+
+.cartBadge {
+  position: relative;
+}
+
+.userButton {
+  border: none;
+  background: transparent;
+}
+
+@media (max-width: 768px) {
+  .headerRow {
+    flex-direction: column;
+    height: auto;
+    padding: var(--spacing-sm) 0;
+  }
+  
+  .searchContainer {
+    margin: var(--spacing-sm) 0;
+    max-width: 100%;
+  }
+  
+  .navigation {
+    width: 100%;
+    justify-content: center;
+  }
+}

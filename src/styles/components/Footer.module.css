@@ -1,0 +1,111 @@
+/* Footer Component Styles */
+.footer {
+  background: #001529;
+  color: white;
+  padding: var(--spacing-xxl) 0;
+  width: 100%;
+  margin: 0;
+}
+
+.footerContainer {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+}
+
+.footerGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.footerSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.brandSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.brandHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.brandIcon {
+  font-size: var(--font-size-title);
+}
+
+.brandTitle {
+  color: white;
+  margin: 0;
+  font-size: var(--font-size-xl);
+}
+
+.brandDescription {
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+}
+
+.sectionTitle {
+  color: white;
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-sm);
+}
+
+.linkList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.footerLink {
+  color: rgba(255, 255, 255, 0.8);
+  padding: 0;
+  text-align: left;
+  transition: color var(--transition-normal);
+}
+
+.footerLink:hover {
+  color: white;
+}
+
+.contactInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.contactItem {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.divider {
+  border-color: rgba(255, 255, 255, 0.2);
+  margin: var(--spacing-lg) 0;
+}
+
+.copyright {
+  text-align: center;
+}
+
+.copyrightText {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+@media (max-width: 768px) {
+  .footerGrid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .footer {
+    padding: var(--spacing-xl) 0;
+  }
+}
