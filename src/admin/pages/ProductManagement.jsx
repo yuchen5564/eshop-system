@@ -100,7 +100,7 @@ const ProductManagement = () => {
       title: '商品圖片',
       dataIndex: 'image',
       key: 'image',
-      width: 80,
+      width: 100,
       render: (image) => (
         <div style={{ fontSize: '32px', textAlign: 'center' }}>{image}</div>
       )
@@ -157,17 +157,6 @@ const ProductManagement = () => {
           <div style={{ fontSize: '12px', color: '#666' }}>{record.location}</div>
         </div>
       )
-    },
-    {
-      title: '評價',
-      key: 'rating',
-      render: (_, record) => (
-        <div>
-          <div>⭐ {record.rating}</div>
-          <div style={{ fontSize: '12px', color: '#666' }}>({record.reviews} 評價)</div>
-        </div>
-      ),
-      sorter: (a, b) => a.rating - b.rating
     },
     {
       title: '操作',
