@@ -10,7 +10,8 @@ import {
   FileTextOutlined,
   MailOutlined,
   GiftOutlined,
-  TruckOutlined
+  TruckOutlined,
+  AppstoreOutlined
 } from '@ant-design/icons';
 
 const AdminSidebar = ({ selectedKey, onMenuSelect, collapsed }) => {
@@ -29,6 +30,11 @@ const AdminSidebar = ({ selectedKey, onMenuSelect, collapsed }) => {
       key: 'products',
       icon: <ShoppingOutlined />,
       label: '商品管理'
+    },
+    {
+      key: 'categories',
+      icon: <AppstoreOutlined />,
+      label: '產品類別'
     },
     {
       key: 'payments',

@@ -5,6 +5,7 @@ import AdminSidebar from './components/AdminSidebar';
 import AdminDashboard from './pages/AdminDashboard';
 import OrderManagement from './pages/OrderManagement';
 import ProductManagement from './pages/ProductManagement';
+import CategoryManagement from './pages/CategoryManagement';
 import PaymentManagement from './pages/PaymentManagement';
 import EmailManagement from './pages/EmailManagement';
 import CouponManagement from './pages/CouponManagement';
@@ -32,6 +33,8 @@ const AdminApp = ({ onBackToSite }) => {
         return <OrderManagement />;
       case 'products':
         return <ProductManagement />;
+      case 'categories':
+        return <CategoryManagement />;
       case 'payments':
         return <PaymentManagement />;
       case 'emails':

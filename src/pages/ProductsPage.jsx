@@ -37,9 +37,9 @@ const ProductsPage = ({
                 type={selectedCategory === category.id ? 'primary' : 'default'}
                 size="large"
                 onClick={() => onCategoryChange(category.id)}
-                icon={category.icon === 'home' ? <HomeOutlined /> : null}
+                icon={category.id === 'all' ? <HomeOutlined /> : null}
               >
-                {category.icon !== 'home' && <span style={{ marginRight: '8px' }}>{category.icon}</span>}
+                {category.id !== 'all' && <span style={{ marginRight: '8px' }}>{category.icon}</span>}
                 {category.name}
               </Button>
             ))}

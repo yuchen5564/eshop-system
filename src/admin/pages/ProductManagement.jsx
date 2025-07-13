@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Table,
   Card,
@@ -25,7 +25,7 @@ import {
   UploadOutlined
 } from '@ant-design/icons';
 import { mockProducts } from '../../data/mockData';
-import { productCategories } from '../data/mockAdminData';
+import categoryService from '../../services/categoryService';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -37,7 +37,17 @@ const ProductManagement = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchText, setSearchText] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [categories, setCategories] = useState([]);
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = () => {
+    const activeCategories = categoryService.getActiveCategories();
+    setCategories(activeCategories);
+  };
 
   const handleAddProduct = () => {
     setEditingProduct(null);
@@ -116,8 +126,8 @@ const ProductManagement = () => {
       dataIndex: 'category',
       key: 'category',
       render: (category) => {
-        const categoryInfo = productCategories.find(c => c.value === category);
-        return <Tag color="blue">{categoryInfo?.label || category}</Tag>;
+        const categoryInfo = categories.find(c => c.id === category);
+        return <Tag color={categoryInfo?.color || "blue"}>{categoryInfo?.name || category}</Tag>;
       }
     },
     {
@@ -220,9 +230,10 @@ const ProductManagement = () => {
               style={{ width: '100%' }}
             >
               <Select.Option value="all">全部分類</Select.Option>
-              {productCategories.map(category => (
-                <Select.Option key={category.value} value={category.value}>
-                  {category.label}
+              {categories.map(category => (
+                <Select.Option key={category.id} value={category.id}>
+                  <span style={{ marginRight: '8px' }}>{category.icon}</span>
+                  {category.name}
                 </Select.Option>
               ))}
             </Select>
@@ -256,7 +267,7 @@ const ProductManagement = () => {
           form={form}
           layout="vertical"
           initialValues={{
-            category: 'vegetable',
+            category: categories.length > 0 ? categories[0].id : '',
             stock: 0,
             price: 0,
             originalPrice: 0,
@@ -280,9 +291,10 @@ const ProductManagement = () => {
                 rules={[{ required: true, message: '請選擇商品分類' }]}
               >
                 <Select placeholder="請選擇商品分類">
-                  {productCategories.map(category => (
-                    <Select.Option key={category.value} value={category.value}>
-                      {category.label}
+                  {categories.map(category => (
+                    <Select.Option key={category.id} value={category.id}>
+                      <span style={{ marginRight: '8px' }}>{category.icon}</span>
+                      {category.name}
                     </Select.Option>
                   ))}
                 </Select>

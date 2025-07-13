@@ -9,7 +9,8 @@ import AboutPage from './pages/AboutPage';
 import CheckoutPage from './pages/CheckoutPage';
 import AdminApp from './admin/AdminApp';
 import AlertNotification, { useAlerts } from './components/AlertNotification';
-import { mockProducts, categories } from './data/mockData';
+import { mockProducts } from './data/mockData';
+import categoryService from './services/categoryService';
 
 const { Content } = Layout;
 
@@ -22,11 +23,22 @@ const FarmEcommerce = () => {
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [categories, setCategories] = useState([]);
   const { alerts, addSuccessAlert, addRemoveAlert, removeAlert } = useAlerts();
 
   useEffect(() => {
     setProducts(mockProducts);
+    loadCategories();
   }, []);
+
+  const loadCategories = () => {
+    const activeCategories = categoryService.getActiveCategories();
+    const categoriesWithAll = [
+      { id: 'all', name: '全部商品', icon: '🏠', color: '#1890ff' },
+      ...activeCategories
+    ];
+    setCategories(categoriesWithAll);
+  };
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
