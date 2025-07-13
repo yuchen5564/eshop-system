@@ -137,31 +137,8 @@ const AdminDashboard = () => {
         </Col>
         
         <Col xs={24} lg={8}>
-          <Card title="系統狀態" style={{ height: '500px' }}>
+          <Card title="快速統計" style={{ height: '500px' }}>
             <Space direction="vertical" style={{ width: '100%' }} size="large">
-              <div>
-                <Text strong>服務器運行狀態</Text>
-                <Progress percent={98} status="active" strokeColor="#52c41a" />
-              </div>
-              
-              <div>
-                <Text strong>資料庫連接</Text>
-                <Progress percent={100} strokeColor="#52c41a" />
-              </div>
-              
-              <div>
-                <Text strong>支付系統</Text>
-                <Progress percent={95} strokeColor="#1890ff" />
-              </div>
-              
-              <div>
-                <Text strong>庫存同步</Text>
-                <Progress percent={88} strokeColor="#faad14" />
-              </div>
-              
-              <div style={{ marginTop: '32px' }}>
-                <Title level={4}>快速統計</Title>
-                <Space direction="vertical" style={{ width: '100%' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Text>今日訂單</Text>
                     <Text strong>12</Text>
@@ -170,16 +147,14 @@ const AdminDashboard = () => {
                     <Text>今日營收</Text>
                     <Text strong>NT$ 8,500</Text>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  {/* <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Text>線上用戶</Text>
                     <Text strong>156</Text>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Text>新註冊用戶</Text>
                     <Text strong>3</Text>
-                  </div>
-                </Space>
-              </div>
+                  </div> */}
             </Space>
           </Card>
         </Col>
