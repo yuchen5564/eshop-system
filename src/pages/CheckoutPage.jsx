@@ -23,6 +23,7 @@ import {
   CheckCircleOutlined,
   ShoppingOutlined
 } from '@ant-design/icons';
+import emailService from '../services/emailService';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -72,9 +73,32 @@ const CheckoutPage = ({ cart, getTotalPrice, onPageChange, onOrderComplete }) =>
   const handleSubmitOrder = async (data) => {
     setLoading(true);
     
-    // 模擬API調用
-    setTimeout(() => {
+    try {
       const orderId = `ORD${Date.now()}`;
+      const orderData = {
+        id: orderId,
+        customerName: data.customerName,
+        customerEmail: data.customerEmail,
+        customerPhone: data.customerPhone,
+        orderDate: new Date().toISOString(),
+        status: 'pending',
+        total: totalAmount,
+        items: cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          image: item.image
+        })),
+        shippingAddress: `${data.city} ${data.address}`,
+        paymentMethod: data.paymentMethod,
+        paymentStatus: data.paymentMethod === 'credit_card' ? 'paid' : 'pending',
+        notes: data.notes || '',
+        shippingInfo: null
+      };
+
+      // 發送訂單確認郵件
+      const emailResult = await emailService.sendOrderConfirmationEmail(orderData);
       
       Modal.success({
         title: '訂單提交成功！',
@@ -82,6 +106,11 @@ const CheckoutPage = ({ cart, getTotalPrice, onPageChange, onOrderComplete }) =>
           <div>
             <p>您的訂單編號：<Text strong>{orderId}</Text></p>
             <p>我們將盡快為您處理訂單，感謝您的購買！</p>
+            {emailResult.success ? (
+              <p style={{ color: '#52c41a' }}>✅ 訂單確認郵件已發送至您的信箱</p>
+            ) : (
+              <p style={{ color: '#faad14' }}>⚠️ 訂單已建立，但郵件發送可能有延遲</p>
+            )}
           </div>
         ),
         onOk: () => {
@@ -90,9 +119,13 @@ const CheckoutPage = ({ cart, getTotalPrice, onPageChange, onOrderComplete }) =>
         }
       });
       
-      setLoading(false);
       message.success('訂單已成功提交！');
-    }, 2000);
+    } catch (error) {
+      console.error('訂單提交失敗:', error);
+      message.error('訂單提交失敗，請稍後再試');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderStepContent = () => {

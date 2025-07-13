@@ -7,7 +7,8 @@ import {
   SettingOutlined,
   UserOutlined,
   BarChartOutlined,
-  FileTextOutlined
+  FileTextOutlined,
+  MailOutlined
 } from '@ant-design/icons';
 
 const AdminSidebar = ({ selectedKey, onMenuSelect, collapsed }) => {
@@ -33,6 +34,11 @@ const AdminSidebar = ({ selectedKey, onMenuSelect, collapsed }) => {
       label: '付款方式'
     },
     {
+      key: 'emails',
+      icon: <MailOutlined />,
+      label: '郵件管理'
+    },
+    {
       key: 'analytics',
       icon: <BarChartOutlined />,
       label: '數據分析'
@@ -50,7 +56,7 @@ const AdminSidebar = ({ selectedKey, onMenuSelect, collapsed }) => {
       borderRight: '1px solid #f0f0f0',
       background: '#fff'
     }}>
-      <div style={{ 
+      {/* <div style={{ 
         padding: '16px', 
         borderBottom: '1px solid #f0f0f0',
         textAlign: 'center'
@@ -62,7 +68,7 @@ const AdminSidebar = ({ selectedKey, onMenuSelect, collapsed }) => {
           </div>
         )}
         {collapsed && <span style={{ fontSize: '24px' }}>🛠️</span>}
-      </div>
+      </div> */}
       
       <Menu
         mode="inline"

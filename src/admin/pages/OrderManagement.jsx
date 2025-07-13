@@ -13,15 +13,19 @@ import {
   Row,
   Col,
   message,
-  Divider
+  Divider,
+  Form
 } from 'antd';
 import {
   EyeOutlined,
   EditOutlined,
   SearchOutlined,
-  FilterOutlined
+  FilterOutlined,
+  TruckOutlined,
+  SendOutlined
 } from '@ant-design/icons';
-import { mockOrders, orderStatusOptions, paymentStatusOptions } from '../data/mockAdminData';
+import { mockOrders, orderStatusOptions, paymentStatusOptions, shippingCarriers } from '../data/mockAdminData';
+import emailService from '../../services/emailService';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -30,9 +34,12 @@ const OrderManagement = () => {
   const [orders, setOrders] = useState(mockOrders);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isShippingModalVisible, setIsShippingModalVisible] = useState(false);
+  const [shippingForm] = Form.useForm();
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [paymentFilter, setPaymentFilter] = useState('all');
+  const [emailSending, setEmailSending] = useState(false);
 
   const handleStatusChange = (orderId, newStatus) => {
     setOrders(orders.map(order => 
@@ -51,6 +58,57 @@ const OrderManagement = () => {
   const showOrderDetail = (order) => {
     setSelectedOrder(order);
     setIsModalVisible(true);
+  };
+
+  const showShippingModal = (order) => {
+    setSelectedOrder(order);
+    setIsShippingModalVisible(true);
+    if (order.shippingInfo) {
+      shippingForm.setFieldsValue({
+        carrier: order.shippingInfo.carrier,
+        trackingNumber: order.shippingInfo.trackingNumber,
+        estimatedDelivery: order.shippingInfo.estimatedDelivery,
+        notes: order.shippingInfo.notes
+      });
+    } else {
+      shippingForm.resetFields();
+    }
+  };
+
+  const handleShippingSubmit = async (values) => {
+    setEmailSending(true);
+    try {
+      const shippingInfo = {
+        ...values,
+        shippedDate: new Date().toISOString(),
+        trackingUrl: shippingCarriers.find(c => c.value === values.carrier)?.trackingUrlTemplate?.replace('{}', values.trackingNumber)
+      };
+
+      setOrders(orders.map(order => 
+        order.id === selectedOrder.id 
+          ? { 
+              ...order, 
+              status: 'shipped',
+              shippingInfo 
+            } 
+          : order
+      ));
+
+      const result = await emailService.sendShippingNotificationEmail(selectedOrder, shippingInfo);
+      
+      if (result.success) {
+        message.success('出貨資訊已更新，通知郵件已發送');
+      } else {
+        message.warning('出貨資訊已更新，但郵件發送失敗');
+      }
+
+      setIsShippingModalVisible(false);
+      shippingForm.resetFields();
+    } catch (error) {
+      message.error('更新出貨資訊失敗');
+    } finally {
+      setEmailSending(false);
+    }
   };
 
   const filteredOrders = orders.filter(order => {
@@ -142,9 +200,29 @@ const OrderManagement = () => {
       sorter: (a, b) => new Date(a.orderDate) - new Date(b.orderDate)
     },
     {
+      title: '出貨狀態',
+      key: 'shipping',
+      width: 120,
+      render: (_, record) => {
+        if (record.shippingInfo) {
+          return (
+            <div>
+              <div style={{ fontSize: '12px', color: '#52c41a' }}>
+                {record.shippingInfo.carrier}
+              </div>
+              <div style={{ fontSize: '10px', color: '#666' }}>
+                {record.shippingInfo.trackingNumber}
+              </div>
+            </div>
+          );
+        }
+        return <Text type="secondary">未出貨</Text>;
+      }
+    },
+    {
       title: '操作',
       key: 'actions',
-      width: 120,
+      width: 160,
       render: (_, record) => (
         <Space>
           <Button
@@ -155,6 +233,16 @@ const OrderManagement = () => {
           >
             詳情
           </Button>
+          {(record.status === 'processing' || record.status === 'shipped') && (
+            <Button
+              type="default"
+              icon={<TruckOutlined />}
+              size="small"
+              onClick={() => showShippingModal(record)}
+            >
+              出貨
+            </Button>
+          )}
         </Space>
       )
     }
@@ -271,6 +359,30 @@ const OrderManagement = () => {
 
             <Divider />
 
+            {selectedOrder.shippingInfo && (
+              <>
+                <Descriptions title="出貨資訊" bordered column={2}>
+                  <Descriptions.Item label="貨運公司">{selectedOrder.shippingInfo.carrier}</Descriptions.Item>
+                  <Descriptions.Item label="追蹤編號">{selectedOrder.shippingInfo.trackingNumber}</Descriptions.Item>
+                  <Descriptions.Item label="出貨時間">
+                    {new Date(selectedOrder.shippingInfo.shippedDate).toLocaleString('zh-TW')}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="預計送達">{selectedOrder.shippingInfo.estimatedDelivery}</Descriptions.Item>
+                  {selectedOrder.shippingInfo.trackingUrl && (
+                    <Descriptions.Item label="貨運追蹤" span={2}>
+                      <a href={selectedOrder.shippingInfo.trackingUrl} target="_blank" rel="noopener noreferrer">
+                        點擊追蹤包裹
+                      </a>
+                    </Descriptions.Item>
+                  )}
+                  {selectedOrder.shippingInfo.notes && (
+                    <Descriptions.Item label="出貨備註" span={2}>{selectedOrder.shippingInfo.notes}</Descriptions.Item>
+                  )}
+                </Descriptions>
+                <Divider />
+              </>
+            )}
+
             <Title level={4}>訂單商品</Title>
             <Table
               dataSource={selectedOrder.items}
@@ -305,6 +417,84 @@ const OrderManagement = () => {
             />
           </div>
         )}
+      </Modal>
+
+      {/* Shipping Info Modal */}
+      <Modal
+        title={`出貨管理 - ${selectedOrder?.id}`}
+        open={isShippingModalVisible}
+        onCancel={() => setIsShippingModalVisible(false)}
+        width={600}
+        footer={[
+          <Button key="cancel" onClick={() => setIsShippingModalVisible(false)}>
+            取消
+          </Button>,
+          <Button 
+            key="submit" 
+            type="primary" 
+            icon={<SendOutlined />}
+            loading={emailSending}
+            onClick={() => shippingForm.submit()}
+          >
+            更新出貨資訊並發送通知
+          </Button>
+        ]}
+      >
+        <Form
+          form={shippingForm}
+          layout="vertical"
+          onFinish={handleShippingSubmit}
+        >
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="carrier"
+                label="貨運公司"
+                rules={[{ required: true, message: '請選擇貨運公司' }]}
+              >
+                <Select placeholder="請選擇貨運公司">
+                  {shippingCarriers.map(carrier => (
+                    <Select.Option key={carrier.value} value={carrier.value}>
+                      {carrier.label}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="trackingNumber"
+                label="追蹤編號"
+                rules={[{ required: true, message: '請輸入追蹤編號' }]}
+              >
+                <Input placeholder="請輸入貨運追蹤編號" />
+              </Form.Item>
+            </Col>
+          </Row>
+          
+          <Form.Item
+            name="estimatedDelivery"
+            label="預計送達日期"
+          >
+            <Input placeholder="例如：2025-01-15 或 1-3個工作天" />
+          </Form.Item>
+
+          <Form.Item
+            name="notes"
+            label="出貨備註"
+          >
+            <Input.TextArea 
+              rows={3} 
+              placeholder="出貨相關備註（選填）"
+            />
+          </Form.Item>
+
+          <div style={{ background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: '6px', padding: '12px', marginTop: '16px' }}>
+            <Text type="secondary">
+              ℹ️ 更新出貨資訊後，系統會自動發送出貨通知郵件給客戶，並將訂單狀態更新為「已出貨」
+            </Text>
+          </div>
+        </Form>
       </Modal>
     </div>
   );

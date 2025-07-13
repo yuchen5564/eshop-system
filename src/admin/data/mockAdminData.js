@@ -15,7 +15,8 @@ export const mockOrders = [
     shippingAddress: '台北市中正區忠孝東路一段1號',
     paymentMethod: 'credit_card',
     paymentStatus: 'paid',
-    notes: '請於下午配送'
+    notes: '請於下午配送',
+    shippingInfo: null
   },
   {
     id: 'ORD002',
@@ -32,7 +33,8 @@ export const mockOrders = [
     shippingAddress: '新北市板橋區文化路二段123號',
     paymentMethod: 'bank_transfer',
     paymentStatus: 'pending',
-    notes: ''
+    notes: '',
+    shippingInfo: null
   },
   {
     id: 'ORD003',
@@ -49,7 +51,15 @@ export const mockOrders = [
     shippingAddress: '台中市西屯區台灣大道三段99號',
     paymentMethod: 'credit_card',
     paymentStatus: 'paid',
-    notes: '包裝請小心'
+    notes: '包裝請小心',
+    shippingInfo: {
+      carrier: '黑貓宅急便',
+      trackingNumber: 'TC123456789TW',
+      shippedDate: '2025-01-11T09:00:00Z',
+      estimatedDelivery: '2025-01-12',
+      trackingUrl: 'https://www.t-cat.com.tw/inquire/trace.aspx?no=TC123456789TW',
+      notes: '請準時收貨'
+    }
   },
   {
     id: 'ORD004',
@@ -66,7 +76,16 @@ export const mockOrders = [
     shippingAddress: '高雄市前金區中正四路100號',
     paymentMethod: 'cash_on_delivery',
     paymentStatus: 'paid',
-    notes: '已完成配送'
+    notes: '已完成配送',
+    shippingInfo: {
+      carrier: '新竹物流',
+      trackingNumber: 'HC987654321TW',
+      shippedDate: '2025-01-10T14:00:00Z',
+      deliveredDate: '2025-01-11T16:30:00Z',
+      estimatedDelivery: '2025-01-11',
+      trackingUrl: 'https://www.hct.com.tw/business/service/query_cargo',
+      notes: '已送達並簽收'
+    }
   }
 ];
 
@@ -153,6 +172,15 @@ export const productCategories = [
   { value: 'vegetable', label: '蔬菜類' },
   { value: 'fruit', label: '水果類' },
   { value: 'grain', label: '穀物類' }
+];
+
+export const shippingCarriers = [
+  { value: '黑貓宅急便', label: '黑貓宅急便', trackingUrlTemplate: 'https://www.t-cat.com.tw/inquire/trace.aspx?no={}' },
+  { value: '新竹物流', label: '新竹物流', trackingUrlTemplate: 'https://www.hct.com.tw/business/service/query_cargo?no={}' },
+  { value: '統一速達', label: '統一速達 (7-ELEVEN)', trackingUrlTemplate: 'https://www.pcse.com.tw/service05/service05_1.aspx?no={}' },
+  { value: '全家便利商店', label: '全家便利商店', trackingUrlTemplate: 'https://www.famiport.com.tw/service/ShipQuery.aspx?no={}' },
+  { value: '中華郵政', label: '中華郵政', trackingUrlTemplate: 'https://postserv.post.gov.tw/pstmail/main_mail.html?no={}' },
+  { value: '嘉里大榮', label: '嘉里大榮', trackingUrlTemplate: 'https://www.kerryexpress.com.tw/track/?no={}' }
 ];
 
 export const dashboardStats = {

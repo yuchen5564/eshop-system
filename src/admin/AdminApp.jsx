@@ -6,6 +6,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import OrderManagement from './pages/OrderManagement';
 import ProductManagement from './pages/ProductManagement';
 import PaymentManagement from './pages/PaymentManagement';
+import EmailManagement from './pages/EmailManagement';
 
 const { Content, Sider } = Layout;
 
@@ -31,6 +32,8 @@ const AdminApp = ({ onBackToSite }) => {
         return <ProductManagement />;
       case 'payments':
         return <PaymentManagement />;
+      case 'emails':
+        return <EmailManagement />;
       case 'analytics':
         return (
           <div style={{ padding: '24px', textAlign: 'center', height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
