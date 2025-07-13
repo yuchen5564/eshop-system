@@ -16,7 +16,10 @@ export const mockOrders = [
     paymentMethod: 'credit_card',
     paymentStatus: 'paid',
     notes: '請於下午配送',
-    shippingInfo: null
+    shippingInfo: null,
+    emailNotifications: {
+      orderConfirmation: { sent: true, sentAt: '2025-01-10T10:35:00Z', status: 'delivered' }
+    }
   },
   {
     id: 'ORD002',
@@ -34,7 +37,10 @@ export const mockOrders = [
     paymentMethod: 'bank_transfer',
     paymentStatus: 'pending',
     notes: '',
-    shippingInfo: null
+    shippingInfo: null,
+    emailNotifications: {
+      orderConfirmation: { sent: false, sentAt: null, status: 'pending' }
+    }
   },
   {
     id: 'ORD003',
@@ -59,6 +65,10 @@ export const mockOrders = [
       estimatedDelivery: '2025-01-12',
       trackingUrl: 'https://www.t-cat.com.tw/inquire/trace.aspx?no=TC123456789TW',
       notes: '請準時收貨'
+    },
+    emailNotifications: {
+      orderConfirmation: { sent: true, sentAt: '2025-01-09T16:50:00Z', status: 'delivered' },
+      shippingNotification: { sent: true, sentAt: '2025-01-11T09:05:00Z', status: 'delivered' }
     }
   },
   {
@@ -85,6 +95,10 @@ export const mockOrders = [
       estimatedDelivery: '2025-01-11',
       trackingUrl: 'https://www.hct.com.tw/business/service/query_cargo',
       notes: '已送達並簽收'
+    },
+    emailNotifications: {
+      orderConfirmation: { sent: true, sentAt: '2025-01-09T09:25:00Z', status: 'delivered' },
+      shippingNotification: { sent: true, sentAt: '2025-01-10T14:05:00Z', status: 'delivered' }
     }
   }
 ];
@@ -191,3 +205,78 @@ export const dashboardStats = {
   monthlyOrdersGrowth: 12.5,
   monthlyRevenueGrowth: 18.3
 };
+
+export const mockEmailLogs = [
+  {
+    id: 'EMAIL001',
+    type: 'order_confirmation',
+    recipient: 'zhang@example.com',
+    recipientName: '張三',
+    subject: '訂單確認 - ORD001',
+    orderId: 'ORD001',
+    sentAt: '2025-01-10T10:35:00Z',
+    status: 'delivered',
+    deliveredAt: '2025-01-10T10:35:15Z',
+    errorMessage: null
+  },
+  {
+    id: 'EMAIL002',
+    type: 'order_confirmation',
+    recipient: 'li@example.com',
+    recipientName: '李四',
+    subject: '訂單確認 - ORD002',
+    orderId: 'ORD002',
+    sentAt: '2025-01-10T14:20:00Z',
+    status: 'failed',
+    deliveredAt: null,
+    errorMessage: '收件人信箱不存在'
+  },
+  {
+    id: 'EMAIL003',
+    type: 'order_confirmation',
+    recipient: 'wang@example.com',
+    recipientName: '王五',
+    subject: '訂單確認 - ORD003',
+    orderId: 'ORD003',
+    sentAt: '2025-01-09T16:50:00Z',
+    status: 'delivered',
+    deliveredAt: '2025-01-09T16:50:08Z',
+    errorMessage: null
+  },
+  {
+    id: 'EMAIL004',
+    type: 'shipping_notification',
+    recipient: 'wang@example.com',
+    recipientName: '王五',
+    subject: '出貨通知 - ORD003',
+    orderId: 'ORD003',
+    sentAt: '2025-01-11T09:05:00Z',
+    status: 'delivered',
+    deliveredAt: '2025-01-11T09:05:12Z',
+    errorMessage: null
+  },
+  {
+    id: 'EMAIL005',
+    type: 'order_confirmation',
+    recipient: 'chen@example.com',
+    recipientName: '陳六',
+    subject: '訂單確認 - ORD004',
+    orderId: 'ORD004',
+    sentAt: '2025-01-09T09:25:00Z',
+    status: 'delivered',
+    deliveredAt: '2025-01-09T09:25:18Z',
+    errorMessage: null
+  },
+  {
+    id: 'EMAIL006',
+    type: 'shipping_notification',
+    recipient: 'chen@example.com',
+    recipientName: '陳六',
+    subject: '出貨通知 - ORD004',
+    orderId: 'ORD004',
+    sentAt: '2025-01-10T14:05:00Z',
+    status: 'delivered',
+    deliveredAt: '2025-01-10T14:05:22Z',
+    errorMessage: null
+  }
+];

@@ -9,7 +9,8 @@ import {
   BarChartOutlined,
   FileTextOutlined,
   MailOutlined,
-  GiftOutlined
+  GiftOutlined,
+  TruckOutlined
 } from '@ant-design/icons';
 
 const AdminSidebar = ({ selectedKey, onMenuSelect, collapsed }) => {
@@ -43,6 +44,11 @@ const AdminSidebar = ({ selectedKey, onMenuSelect, collapsed }) => {
       key: 'coupons',
       icon: <GiftOutlined />,
       label: '折價券管理'
+    },
+    {
+      key: 'logistics',
+      icon: <TruckOutlined />,
+      label: '物流設定'
     },
     {
       key: 'analytics',

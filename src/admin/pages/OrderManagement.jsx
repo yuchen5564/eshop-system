@@ -84,23 +84,38 @@ const OrderManagement = () => {
         trackingUrl: shippingCarriers.find(c => c.value === values.carrier)?.trackingUrlTemplate?.replace('{}', values.trackingNumber)
       };
 
-      setOrders(orders.map(order => 
-        order.id === selectedOrder.id 
-          ? { 
-              ...order, 
-              status: 'shipped',
-              shippingInfo 
-            } 
-          : order
-      ));
+      const updatedOrder = {
+        ...selectedOrder,
+        status: 'shipped',
+        shippingInfo,
+        emailNotifications: {
+          ...selectedOrder.emailNotifications,
+          shippingNotification: { sent: false, sentAt: null, status: 'pending' }
+        }
+      };
 
       const result = await emailService.sendShippingNotificationEmail(selectedOrder, shippingInfo);
       
+      // 更新郵件發送狀態
       if (result.success) {
+        updatedOrder.emailNotifications.shippingNotification = {
+          sent: true,
+          sentAt: new Date().toISOString(),
+          status: 'delivered'
+        };
         message.success('出貨資訊已更新，通知郵件已發送');
       } else {
+        updatedOrder.emailNotifications.shippingNotification = {
+          sent: false,
+          sentAt: new Date().toISOString(),
+          status: 'failed'
+        };
         message.warning('出貨資訊已更新，但郵件發送失敗');
       }
+
+      setOrders(orders.map(order => 
+        order.id === selectedOrder.id ? updatedOrder : order
+      ));
 
       setIsShippingModalVisible(false);
       shippingForm.resetFields();
@@ -108,6 +123,36 @@ const OrderManagement = () => {
       message.error('更新出貨資訊失敗');
     } finally {
       setEmailSending(false);
+    }
+  };
+
+  const handleShippingWithoutNotification = async (values) => {
+    try {
+      const shippingInfo = {
+        ...values,
+        shippedDate: new Date().toISOString(),
+        trackingUrl: shippingCarriers.find(c => c.value === values.carrier)?.trackingUrlTemplate?.replace('{}', values.trackingNumber)
+      };
+      
+      const updatedOrder = {
+        ...selectedOrder,
+        status: 'shipped',
+        shippingInfo,
+        emailNotifications: {
+          ...selectedOrder.emailNotifications,
+          shippingNotification: { sent: false, sentAt: null, status: 'not_sent' }
+        }
+      };
+      
+      setOrders(orders.map(order => 
+        order.id === selectedOrder.id ? updatedOrder : order
+      ));
+
+      message.success('出貨資訊已更新（未發送通知郵件）');
+      setIsShippingModalVisible(false);
+      shippingForm.resetFields();
+    } catch {
+      message.error('更新出貨資訊失敗');
     }
   };
 
@@ -198,6 +243,30 @@ const OrderManagement = () => {
       key: 'orderDate',
       render: (date) => new Date(date).toLocaleString('zh-TW'),
       sorter: (a, b) => new Date(a.orderDate) - new Date(b.orderDate)
+    },
+    {
+      title: '郵件通知',
+      key: 'notifications',
+      width: 120,
+      render: (_, record) => {
+        const notifications = record.emailNotifications || {};
+        return (
+          <div>
+            <div style={{ fontSize: '12px', marginBottom: '2px' }}>
+              <span style={{ color: notifications.orderConfirmation?.sent ? '#52c41a' : '#faad14' }}>
+                訂單確認: {notifications.orderConfirmation?.sent ? '✓' : '✗'}
+              </span>
+            </div>
+            {notifications.shippingNotification && (
+              <div style={{ fontSize: '12px' }}>
+                <span style={{ color: notifications.shippingNotification?.sent ? '#52c41a' : '#faad14' }}>
+                  出貨通知: {notifications.shippingNotification?.sent ? '✓' : '✗'}
+                </span>
+              </div>
+            )}
+          </div>
+        );
+      }
     },
     {
       title: '出貨狀態',
@@ -431,13 +500,27 @@ const OrderManagement = () => {
             取消
           </Button>,
           <Button 
+            key="submitNoNotify" 
+            type="default"
+            icon={<TruckOutlined />}
+            onClick={() => {
+              shippingForm.validateFields().then(values => {
+                handleShippingWithoutNotification(values);
+              }).catch(() => {
+                message.error('請完整填寫出貨資訊');
+              });
+            }}
+          >
+            出貨（不寄送通知）
+          </Button>,
+          <Button 
             key="submit" 
             type="primary" 
             icon={<SendOutlined />}
             loading={emailSending}
             onClick={() => shippingForm.submit()}
           >
-            更新出貨資訊並發送通知
+            出貨並發送通知
           </Button>
         ]}
       >

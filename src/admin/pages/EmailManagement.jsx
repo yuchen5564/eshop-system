@@ -14,16 +14,19 @@ import {
   Switch,
   Table,
   Modal,
-  Alert
+  Alert,
+  Tag
 } from 'antd';
 import {
   MailOutlined,
   SettingOutlined,
   SendOutlined,
   EyeOutlined,
-  SaveOutlined
+  SaveOutlined,
+  FileTextOutlined
 } from '@ant-design/icons';
 import emailService from '../../services/emailService';
+import { mockEmailLogs } from '../data/mockAdminData';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -35,6 +38,7 @@ const EmailManagement = () => {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewContent, setPreviewContent] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailLogs] = useState(mockEmailLogs);
 
   const [emailTemplates, setEmailTemplates] = useState({
     order_confirmation: {
@@ -247,6 +251,7 @@ const EmailManagement = () => {
       setLoading(false);
     }
   };
+
 
   const tabItems = [
     {
@@ -514,6 +519,98 @@ const EmailManagement = () => {
               </Col>
             </Row>
           </Form>
+        </Card>
+      )
+    },
+    {
+      key: 'logs',
+      label: (
+        <span>
+          <FileTextOutlined />
+          郵件記錄
+        </span>
+      ),
+      children: (
+        <Card>
+          <Title level={4}>發送記錄</Title>
+          <Table
+            columns={[
+              {
+                title: '郵件類型',
+                dataIndex: 'type',
+                key: 'type',
+                width: 120,
+                render: (type) => {
+                  const typeMap = {
+                    'order_confirmation': { text: '訂單確認', color: 'blue' },
+                    'shipping_notification': { text: '出貨通知', color: 'green' }
+                  };
+                  const info = typeMap[type] || { text: type, color: 'default' };
+                  return <Tag color={info.color}>{info.text}</Tag>;
+                }
+              },
+              {
+                title: '收件人',
+                dataIndex: 'recipientName',
+                key: 'recipientName',
+                width: 120
+              },
+              {
+                title: '信箱',
+                dataIndex: 'recipient',
+                key: 'recipient',
+                width: 200
+              },
+              {
+                title: '主旨',
+                dataIndex: 'subject',
+                key: 'subject'
+              },
+              {
+                title: '關聯訂單',
+                dataIndex: 'orderId',
+                key: 'orderId',
+                width: 120
+              },
+              {
+                title: '發送時間',
+                dataIndex: 'sentAt',
+                key: 'sentAt',
+                width: 150,
+                render: (date) => date ? new Date(date).toLocaleString('zh-TW') : '-'
+              },
+              {
+                title: '狀態',
+                dataIndex: 'status',
+                key: 'status',
+                width: 100,
+                render: (status) => {
+                  const statusMap = {
+                    'delivered': { text: '已送達', color: 'green' },
+                    'failed': { text: '失敗', color: 'red' },
+                    'pending': { text: '發送中', color: 'orange' }
+                  };
+                  const info = statusMap[status] || { text: status, color: 'default' };
+                  return <Tag color={info.color}>{info.text}</Tag>;
+                }
+              },
+              {
+                title: '錯誤訊息',
+                dataIndex: 'errorMessage',
+                key: 'errorMessage',
+                width: 150,
+                render: (error) => error ? <Text type="danger">{error}</Text> : '-'
+              }
+            ]}
+            dataSource={emailLogs}
+            rowKey="id"
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showTotal: (total) => `共 ${total} 筆記錄`
+            }}
+            size="middle"
+          />
         </Card>
       )
     }
