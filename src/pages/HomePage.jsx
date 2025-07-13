@@ -91,7 +91,7 @@ const HomePage = ({ products, onAddToCart, onPageChange }) => {
             熱門商品
           </Title>
           <Row gutter={[24, 24]}>
-            {products.slice(0, 4).map(product => (
+            {products.filter(product => product.isActive !== false).slice(0, 4).map(product => (
               <Col xs={24} sm={12} md={6} key={product.id}>
                 <ProductCard product={product} onAddToCart={onAddToCart} />
               </Col>

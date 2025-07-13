@@ -14,7 +14,8 @@ import {
   Col,
   message,
   Divider,
-  Form
+  Form,
+  DatePicker
 } from 'antd';
 import {
   EyeOutlined,
@@ -22,7 +23,9 @@ import {
   SearchOutlined,
   FilterOutlined,
   TruckOutlined,
-  SendOutlined
+  SendOutlined,
+  DownloadOutlined,
+  CalendarOutlined
 } from '@ant-design/icons';
 import { mockOrders, orderStatusOptions, paymentStatusOptions, shippingCarriers } from '../data/mockAdminData';
 import emailService from '../../services/emailService';
@@ -39,6 +42,7 @@ const OrderManagement = () => {
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [paymentFilter, setPaymentFilter] = useState('all');
+  const [dateRange, setDateRange] = useState([]);
   const [emailSending, setEmailSending] = useState(false);
 
   const handleStatusChange = (orderId, newStatus) => {
@@ -156,13 +160,78 @@ const OrderManagement = () => {
     }
   };
 
+  const handleExportReport = () => {
+    const csvContent = generateCSVReport(filteredOrders);
+    downloadCSV(csvContent, 'order-report.csv');
+    message.success('報表已匯出');
+  };
+
+  const generateCSVReport = (orders) => {
+    const headers = [
+      '訂單編號',
+      '客戶姓名',
+      '客戶電話',
+      '客戶郵件',
+      '訂單金額',
+      '訂單狀態',
+      '付款狀態',
+      '訂單時間',
+      '配送地址',
+      '付款方式',
+      '出貨狀態',
+      '貨運公司',
+      '追蹤編號'
+    ];
+    
+    const rows = orders.map(order => [
+      order.id,
+      order.customerName,
+      order.customerPhone,
+      order.customerEmail,
+      order.total,
+      orderStatusOptions.find(opt => opt.value === order.status)?.label || order.status,
+      paymentStatusOptions.find(opt => opt.value === order.paymentStatus)?.label || order.paymentStatus,
+      new Date(order.orderDate).toLocaleString('zh-TW'),
+      order.shippingAddress,
+      order.paymentMethod,
+      order.shippingInfo ? '已出貨' : '未出貨',
+      order.shippingInfo?.carrier || '',
+      order.shippingInfo?.trackingNumber || ''
+    ]);
+    
+    return [headers, ...rows].map(row => 
+      row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+    ).join('\n');
+  };
+
+  const downloadCSV = (csvContent, filename) => {
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.id.toLowerCase().includes(searchText.toLowerCase()) ||
                          order.customerName.toLowerCase().includes(searchText.toLowerCase());
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     const matchesPayment = paymentFilter === 'all' || order.paymentStatus === paymentFilter;
     
-    return matchesSearch && matchesStatus && matchesPayment;
+    let matchesDate = true;
+    if (dateRange && dateRange.length === 2) {
+      const orderDate = new Date(order.orderDate);
+      const startDate = dateRange[0].startOf('day').toDate();
+      const endDate = dateRange[1].endOf('day').toDate();
+      matchesDate = orderDate >= startDate && orderDate <= endDate;
+    }
+    
+    return matchesSearch && matchesStatus && matchesPayment && matchesDate;
   });
 
   const columns = [
@@ -319,15 +388,22 @@ const OrderManagement = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      <div style={{ marginBottom: '24px' }}>
+      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Title level={3} style={{ margin: 0 }}>訂單管理</Title>
+        <Button 
+          type="primary" 
+          icon={<DownloadOutlined />} 
+          onClick={handleExportReport}
+        >
+          匯出報表
+        </Button>
       </div>
       
       <Card>
 
         {/* Filters */}
         <Row gutter={16} style={{ marginBottom: '16px' }}>
-          <Col xs={24} sm={8}>
+          <Col xs={24} sm={6}>
             <Search
               placeholder="搜尋訂單編號或客戶姓名"
               value={searchText}
@@ -364,6 +440,29 @@ const OrderManagement = () => {
                 </Select.Option>
               ))}
             </Select>
+          </Col>
+          <Col xs={24} sm={6}>
+            <DatePicker.RangePicker
+              placeholder={['開始日期', '結束日期']}
+              value={dateRange}
+              onChange={setDateRange}
+              style={{ width: '100%' }}
+              format="YYYY-MM-DD"
+            />
+          </Col>
+          <Col xs={24} sm={4}>
+            <Button 
+              icon={<FilterOutlined />} 
+              onClick={() => {
+                setSearchText('');
+                setStatusFilter('all');
+                setPaymentFilter('all');
+                setDateRange([]);
+              }}
+              style={{ width: '100%' }}
+            >
+              清除篩選
+            </Button>
           </Col>
         </Row>
 

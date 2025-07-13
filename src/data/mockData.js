@@ -11,7 +11,8 @@ export const mockProducts = [
     farm: '陽光農場',
     location: '台中市',
     stock: 25,
-    unit: '斤'
+    unit: '斤',
+    isActive: true
   },
   {
     id: 2,
@@ -24,7 +25,8 @@ export const mockProducts = [
     farm: '高山農場',
     location: '南投縣',
     stock: 15,
-    unit: '顆'
+    unit: '顆',
+    isActive: true
   },
   {
     id: 3,
@@ -37,7 +39,8 @@ export const mockProducts = [
     farm: '綠野農場',
     location: '彰化縣',
     stock: 30,
-    unit: '斤'
+    unit: '斤',
+    isActive: false
   },
   {
     id: 4,
@@ -50,7 +53,8 @@ export const mockProducts = [
     farm: '金黃農場',
     location: '雲林縣',
     stock: 20,
-    unit: '根'
+    unit: '根',
+    isActive: true
   },
   {
     id: 5,
@@ -63,7 +67,8 @@ export const mockProducts = [
     farm: '南國果園',
     location: '台南市',
     stock: 12,
-    unit: '斤'
+    unit: '斤',
+    isActive: true
   },
   {
     id: 6,
@@ -76,7 +81,8 @@ export const mockProducts = [
     farm: '熱帶果園',
     location: '屏東縣',
     stock: 35,
-    unit: '串'
+    unit: '串',
+    isActive: true
   },
   {
     id: 7,
@@ -89,7 +95,8 @@ export const mockProducts = [
     farm: '莓好農場',
     location: '苗栗縣',
     stock: 8,
-    unit: '盒'
+    unit: '盒',
+    isActive: false
   },
   {
     id: 8,
@@ -102,7 +109,8 @@ export const mockProducts = [
     farm: '池上農會',
     location: '台東縣',
     stock: 50,
-    unit: '包(3kg)'
+    unit: '包(3kg)',
+    isActive: true
   }
 ];
 

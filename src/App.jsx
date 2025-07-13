@@ -43,7 +43,8 @@ const FarmEcommerce = () => {
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    const isActive = product.isActive !== false; // 只顯示上架商品，預設為true
+    return matchesSearch && matchesCategory && isActive;
   });
 
   const addToCart = (product) => {

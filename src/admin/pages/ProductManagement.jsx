@@ -15,7 +15,8 @@ import {
   Typography,
   Row,
   Col,
-  Tag
+  Tag,
+  Switch
 } from 'antd';
 import {
   PlusOutlined,
@@ -37,6 +38,7 @@ const ProductManagement = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchText, setSearchText] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [categories, setCategories] = useState([]);
   const [form] = Form.useForm();
 
@@ -84,7 +86,8 @@ const ProductManagement = () => {
           id: Math.max(...products.map(p => p.id)) + 1,
           ...values,
           rating: 0,
-          reviews: 0
+          reviews: 0,
+          isActive: true
         };
         setProducts([...products, newProduct]);
         message.success('商品已添加');
@@ -97,12 +100,24 @@ const ProductManagement = () => {
     }
   };
 
+  const handleToggleStatus = (productId, newStatus) => {
+    setProducts(products.map(p => 
+      p.id === productId 
+        ? { ...p, isActive: newStatus }
+        : p
+    ));
+    message.success(newStatus ? '商品已上架' : '商品已下架');
+  };
+
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchText.toLowerCase()) ||
                          product.farm.toLowerCase().includes(searchText.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
+    const matchesStatus = statusFilter === 'all' || 
+                         (statusFilter === 'active' && product.isActive) ||
+                         (statusFilter === 'inactive' && !product.isActive);
     
-    return matchesSearch && matchesCategory;
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
   const columns = [
@@ -146,6 +161,20 @@ const ProductManagement = () => {
         </div>
       ),
       sorter: (a, b) => a.price - b.price
+    },
+    {
+      title: '狀態',
+      dataIndex: 'isActive',
+      key: 'isActive',
+      width: 100,
+      render: (isActive, record) => (
+        <Switch
+          checked={isActive}
+          onChange={(checked) => handleToggleStatus(record.id, checked)}
+          checkedChildren="上架"
+          unCheckedChildren="下架"
+        />
+      )
     },
     {
       title: '庫存',
@@ -214,7 +243,7 @@ const ProductManagement = () => {
 
         {/* Filters */}
         <Row gutter={16} style={{ marginBottom: '16px' }}>
-          <Col xs={24} sm={12}>
+          <Col xs={24} sm={8}>
             <Search
               placeholder="搜尋商品名稱或農場"
               value={searchText}
@@ -222,7 +251,7 @@ const ProductManagement = () => {
               style={{ width: '100%' }}
             />
           </Col>
-          <Col xs={24} sm={6}>
+          <Col xs={12} sm={4}>
             <Select
               placeholder="商品分類"
               value={categoryFilter}
@@ -236,6 +265,18 @@ const ProductManagement = () => {
                   {category.name}
                 </Select.Option>
               ))}
+            </Select>
+          </Col>
+          <Col xs={12} sm={4}>
+            <Select
+              placeholder="商品狀態"
+              value={statusFilter}
+              onChange={setStatusFilter}
+              style={{ width: '100%' }}
+            >
+              <Select.Option value="all">全部狀態</Select.Option>
+              <Select.Option value="active">已上架</Select.Option>
+              <Select.Option value="inactive">已下架</Select.Option>
             </Select>
           </Col>
         </Row>
@@ -271,7 +312,8 @@ const ProductManagement = () => {
             stock: 0,
             price: 0,
             originalPrice: 0,
-            unit: '斤'
+            unit: '斤',
+            isActive: true
           }}
         >
           <Row gutter={16}>
@@ -375,7 +417,7 @@ const ProductManagement = () => {
           </Row>
 
           <Row gutter={16}>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 name="farm"
                 label="農場名稱"
@@ -384,13 +426,25 @@ const ProductManagement = () => {
                 <Input placeholder="請輸入農場名稱" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item
                 name="location"
                 label="產地"
                 rules={[{ required: true, message: '請輸入產地' }]}
               >
                 <Input placeholder="請輸入產地" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item
+                name="isActive"
+                label="商品狀態"
+                valuePropName="checked"
+              >
+                <Switch
+                  checkedChildren="上架"
+                  unCheckedChildren="下架"
+                />
               </Form.Item>
             </Col>
           </Row>
