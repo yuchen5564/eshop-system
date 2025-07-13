@@ -14,28 +14,41 @@ import {
   Space,
   List,
   message,
-  Modal
+  Modal,
+  Tag,
+  Alert
 } from 'antd';
 import {
   UserOutlined,
   EnvironmentOutlined,
   CreditCardOutlined,
   CheckCircleOutlined,
-  ShoppingOutlined
+  ShoppingOutlined,
+  GiftOutlined,
+  PercentageOutlined
 } from '@ant-design/icons';
 import emailService from '../services/emailService';
+import couponService from '../services/couponService';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
-const CheckoutPage = ({ cart, getTotalPrice, onPageChange, onOrderComplete }) => {
+const CheckoutPage = ({ 
+  cart, 
+  getTotalPrice, 
+  onPageChange, 
+  onOrderComplete,
+  appliedCoupon,
+  discountAmount = 0
+}) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [orderData, setOrderData] = useState({});
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
   const shippingFee = 100;
-  const totalAmount = getTotalPrice() + shippingFee;
+  const subtotal = getTotalPrice();
+  const totalAmount = subtotal + shippingFee - discountAmount;
 
   const paymentMethods = [
     { value: 'credit_card', label: '信用卡付款', icon: '💳' },
@@ -82,6 +95,9 @@ const CheckoutPage = ({ cart, getTotalPrice, onPageChange, onOrderComplete }) =>
         customerPhone: data.customerPhone,
         orderDate: new Date().toISOString(),
         status: 'pending',
+        subtotal: subtotal,
+        discountAmount: discountAmount,
+        appliedCoupon: appliedCoupon,
         total: totalAmount,
         items: cart.map(item => ({
           id: item.id,
@@ -96,6 +112,11 @@ const CheckoutPage = ({ cart, getTotalPrice, onPageChange, onOrderComplete }) =>
         notes: data.notes || '',
         shippingInfo: null
       };
+
+      // 使用優惠券
+      if (appliedCoupon) {
+        couponService.useCoupon(appliedCoupon.code, 'guest', orderId);
+      }
 
       // 發送訂單確認郵件
       const emailResult = await emailService.sendOrderConfirmationEmail(orderData);
@@ -293,6 +314,35 @@ const CheckoutPage = ({ cart, getTotalPrice, onPageChange, onOrderComplete }) =>
                 付款方式：{paymentMethods.find(m => m.value === orderData.paymentMethod)?.label}
               </Text>
             </Card>
+
+            {/* 優惠券資訊 */}
+            {appliedCoupon && (
+              <Card title="優惠券資訊" style={{ marginBottom: '16px' }}>
+                <Alert
+                  message={
+                    <Space>
+                      <Tag 
+                        icon={appliedCoupon.type === 'fixed' ? <GiftOutlined /> : <PercentageOutlined />}
+                        color={appliedCoupon.type === 'fixed' ? 'blue' : 'orange'}
+                      >
+                        {appliedCoupon.code}
+                      </Tag>
+                      <Text strong>{appliedCoupon.name}</Text>
+                    </Space>
+                  }
+                  description={
+                    <div>
+                      <div>{appliedCoupon.description}</div>
+                      <div style={{ color: '#52c41a', fontWeight: 'bold', marginTop: '4px' }}>
+                        折扣金額：NT$ {discountAmount}
+                      </div>
+                    </div>
+                  }
+                  type="success"
+                  showIcon
+                />
+              </Card>
+            )}
           </div>
         );
 
@@ -363,12 +413,18 @@ const CheckoutPage = ({ cart, getTotalPrice, onPageChange, onOrderComplete }) =>
               <Space direction="vertical" size="middle" style={{ width: '100%' }}>
                 <Row justify="space-between">
                   <Text>商品總計</Text>
-                  <Text strong>NT$ {getTotalPrice()}</Text>
+                  <Text strong>NT$ {subtotal}</Text>
                 </Row>
                 <Row justify="space-between">
                   <Text>運費</Text>
                   <Text strong>NT$ {shippingFee}</Text>
                 </Row>
+                {appliedCoupon && discountAmount > 0 && (
+                  <Row justify="space-between">
+                    <Text>優惠折扣</Text>
+                    <Text strong style={{ color: '#52c41a' }}>-NT$ {discountAmount}</Text>
+                  </Row>
+                )}
                 <Divider style={{ margin: '8px 0' }} />
                 <Row justify="space-between">
                   <Title level={4}>總計</Title>

@@ -20,6 +20,8 @@ const FarmEcommerce = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isAdminMode, setIsAdminMode] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
   const { alerts, addSuccessAlert, addRemoveAlert, removeAlert } = useAlerts();
 
   useEffect(() => {
@@ -104,7 +106,19 @@ const FarmEcommerce = () => {
 
   const handleOrderComplete = () => {
     setCart([]);
+    setAppliedCoupon(null);
+    setDiscountAmount(0);
     message.success('訂單已成功提交，購物車已清空！');
+  };
+
+  const handleApplyCoupon = (coupon, discount) => {
+    setAppliedCoupon(coupon);
+    setDiscountAmount(discount);
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setDiscountAmount(0);
   };
 
   const handleCategoryChange = (categoryId) => {
@@ -158,6 +172,10 @@ const FarmEcommerce = () => {
             onRemoveFromCart={removeFromCart}
             getTotalPrice={getTotalPrice}
             onPageChange={handlePageChange}
+            appliedCoupon={appliedCoupon}
+            onApplyCoupon={handleApplyCoupon}
+            onRemoveCoupon={handleRemoveCoupon}
+            discountAmount={discountAmount}
           />
         )}
         {currentPage === 'about' && <AboutPage />}
@@ -167,6 +185,8 @@ const FarmEcommerce = () => {
             getTotalPrice={getTotalPrice}
             onPageChange={handlePageChange}
             onOrderComplete={handleOrderComplete}
+            appliedCoupon={appliedCoupon}
+            discountAmount={discountAmount}
           />
         )}
       </Content>

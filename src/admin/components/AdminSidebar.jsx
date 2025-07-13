@@ -8,7 +8,8 @@ import {
   UserOutlined,
   BarChartOutlined,
   FileTextOutlined,
-  MailOutlined
+  MailOutlined,
+  GiftOutlined
 } from '@ant-design/icons';
 
 const AdminSidebar = ({ selectedKey, onMenuSelect, collapsed }) => {
@@ -37,6 +38,11 @@ const AdminSidebar = ({ selectedKey, onMenuSelect, collapsed }) => {
       key: 'emails',
       icon: <MailOutlined />,
       label: '郵件管理'
+    },
+    {
+      key: 'coupons',
+      icon: <GiftOutlined />,
+      label: '折價券管理'
     },
     {
       key: 'analytics',
