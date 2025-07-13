@@ -61,19 +61,34 @@ const AdminApp = ({ onBackToSite }) => {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: '100vh', overflow: 'hidden' }}>
       <AdminHeader 
         collapsed={collapsed} 
         onToggleCollapse={toggleCollapse}
         onBackToSite={onBackToSite}
+        style={{ 
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1000
+        }}
       />
       
-      <Layout>
+      <Layout style={{ marginTop: '64px', height: 'calc(100vh - 64px)' }}>
         <Sider 
           width={250} 
           collapsedWidth={80}
           collapsed={collapsed}
-          style={{ background: '#fff' }}
+          style={{ 
+            background: '#fff',
+            position: 'fixed',
+            left: 0,
+            top: '64px',
+            bottom: 0,
+            zIndex: 999,
+            overflow: 'auto'
+          }}
           breakpoint="lg"
           onBreakpoint={(broken) => {
             if (broken) {
@@ -88,10 +103,13 @@ const AdminApp = ({ onBackToSite }) => {
           />
         </Sider>
         
-        <Layout>
+        <Layout style={{ 
+          marginLeft: collapsed ? '80px' : '250px',
+          transition: 'margin-left 0.2s'
+        }}>
           <Content style={{ 
             background: '#f0f2f5', 
-            minHeight: 'calc(100vh - 64px)',
+            height: 'calc(100vh - 64px)',
             overflow: 'auto'
           }}>
             {renderContent()}

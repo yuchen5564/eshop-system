@@ -204,13 +204,14 @@ const ProductManagement = () => {
 
   return (
     <div style={{ padding: '24px' }}>
+      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Title level={3} style={{ margin: 0 }}>商品管理</Title>
+        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddProduct}>
+          新增商品
+        </Button>
+      </div>
+      
       <Card>
-        <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Title level={3} style={{ margin: 0 }}>商品管理</Title>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAddProduct}>
-            新增商品
-          </Button>
-        </div>
 
         {/* Filters */}
         <Row gutter={16} style={{ marginBottom: '16px' }}>

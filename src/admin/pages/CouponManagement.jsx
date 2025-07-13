@@ -320,11 +320,19 @@ const CouponManagement = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      <div style={{ marginBottom: '24px' }}>
-        <Title level={3}>優惠券管理</Title>
-        
-        {/* 統計卡片 */}
-        <Row gutter={16} style={{ marginBottom: '24px' }}>
+      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Title level={3} style={{ margin: 0 }}>優惠券管理</Title>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={handleCreate}
+        >
+          新增優惠券
+        </Button>
+      </div>
+      
+      {/* 統計卡片 */}
+      <Row gutter={16} style={{ marginBottom: '24px' }}>
           <Col xs={24} sm={6}>
             <Card>
               <Statistic
@@ -364,19 +372,8 @@ const CouponManagement = () => {
             </Card>
           </Col>
         </Row>
-      </div>
 
-      <Card>
-        <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between' }}>
-          <Title level={4} style={{ margin: 0 }}>優惠券列表</Title>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleCreate}
-          >
-            新增優惠券
-          </Button>
-        </div>
+      <Card title="優惠券列表">
 
         <Table
           columns={columns}

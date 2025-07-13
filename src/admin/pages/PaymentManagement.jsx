@@ -128,13 +128,14 @@ const PaymentManagement = () => {
 
   return (
     <div style={{ padding: '24px' }}>
+      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Title level={3} style={{ margin: 0 }}>付款方式管理</Title>
+        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddMethod}>
+          新增付款方式
+        </Button>
+      </div>
+      
       <Card>
-        <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Title level={3} style={{ margin: 0 }}>付款方式管理</Title>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAddMethod}>
-            新增付款方式
-          </Button>
-        </div>
 
         <Alert
           message="付款方式設定"

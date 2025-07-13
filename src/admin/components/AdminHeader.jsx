@@ -12,7 +12,7 @@ import {
 const { Header } = Layout;
 const { Text } = Typography;
 
-const AdminHeader = ({ collapsed, onToggleCollapse, onBackToSite }) => {
+const AdminHeader = ({ collapsed, onToggleCollapse, onBackToSite, style }) => {
   const userMenuItems = [
     {
       key: 'profile',
@@ -41,7 +41,8 @@ const AdminHeader = ({ collapsed, onToggleCollapse, onBackToSite }) => {
       borderBottom: '1px solid #f0f0f0',
       display: 'flex',
       alignItems: 'center',
-      justifyContent: 'space-between'
+      justifyContent: 'space-between',
+      ...style
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         <Button

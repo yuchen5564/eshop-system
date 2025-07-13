@@ -250,10 +250,11 @@ const OrderManagement = () => {
 
   return (
     <div style={{ padding: '24px' }}>
+      <div style={{ marginBottom: '24px' }}>
+        <Title level={3} style={{ margin: 0 }}>訂單管理</Title>
+      </div>
+      
       <Card>
-        <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Title level={3} style={{ margin: 0 }}>訂單管理</Title>
-        </div>
 
         {/* Filters */}
         <Row gutter={16} style={{ marginBottom: '16px' }}>

@@ -521,7 +521,9 @@ const EmailManagement = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      <Title level={3}>郵件管理</Title>
+      <div style={{ marginBottom: '24px' }}>
+        <Title level={3} style={{ margin: 0 }}>郵件管理</Title>
+      </div>
       
       <Tabs
         activeKey={activeTab}

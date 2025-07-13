@@ -62,12 +62,12 @@ const AdminDashboard = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      <Title level={2} style={{ marginBottom: '32px' }}>
-        總覽儀表板
-      </Title>
+      <div style={{ marginBottom: '24px' }}>
+        <Title level={3} style={{ margin: 0 }}>總覽儀表板</Title>
+      </div>
 
       {/* Statistics Cards */}
-      <Row gutter={[24, 24]} style={{ marginBottom: '32px' }}>
+      <Row gutter={[24, 24]} style={{ marginBottom: '24px' }}>
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic

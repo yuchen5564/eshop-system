@@ -81,7 +81,11 @@ const AdminSidebar = ({ selectedKey, onMenuSelect, collapsed }) => {
         selectedKeys={[selectedKey]}
         items={menuItems}
         onClick={({ key }) => onMenuSelect(key)}
-        style={{ border: 'none', height: 'calc(100% - 65px)' }}
+        style={{ 
+          border: 'none', 
+          height: '100%',
+          overflow: 'auto'
+        }}
         inlineCollapsed={collapsed}
       />
     </div>
