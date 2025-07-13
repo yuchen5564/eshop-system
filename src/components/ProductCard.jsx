@@ -23,7 +23,7 @@ const ProductCard = ({ product, onAddToCart }) => {
 
   return (
     <Card
-      hoverable
+      // hoverable
       style={{ height: '100%' }}
       cover={
         <div style={{ 
@@ -32,9 +32,14 @@ const ProductCard = ({ product, onAddToCart }) => {
           alignItems: 'center', 
           justifyContent: 'center',
           fontSize: '80px',
-          background: '#f5f5f5'
+          background: '#f0f0f0'
         }}>
           {product.image}
+          {discount > 0 && (
+            <Tag color="red" style={{ position: 'absolute', top: '-10px', right: '-10px' }}>
+              -{discount}%
+            </Tag>
+          )}
         </div>
       }
       actions={[
@@ -48,36 +53,13 @@ const ProductCard = ({ product, onAddToCart }) => {
         </Button>
       ]}
     >
-      <div style={{ position: 'relative' }}>
-        {discount > 0 && (
-          <Tag color="red" style={{ position: 'absolute', top: '-10px', right: '-10px' }}>
-            -{discount}%
-          </Tag>
-        )}
-        <HeartOutlined 
-          style={{ 
-            position: 'absolute', 
-            top: '-10px', 
-            right: '20px',
-            fontSize: '20px',
-            color: '#d9d9d9',
-            cursor: 'pointer'
-          }}
-        />
-      </div>
-      
       <Meta 
-        title={<Title level={4}>{product.name}</Title>}
+        title={<Title level={3}>{product.name}</Title>}
         description={
           <Space direction="vertical" size="small" style={{ width: '100%' }}>
             <Space>
               <EnvironmentOutlined />
               <Text type="secondary">{product.farm} • {product.location}</Text>
-            </Space>
-            
-            <Space>
-              <Rate disabled defaultValue={product.rating} allowHalf />
-              <Text type="secondary">({product.reviews} 評價)</Text>
             </Space>
             
             <Paragraph ellipsis={{ rows: 2 }}>{product.description}</Paragraph>
@@ -89,8 +71,8 @@ const ProductCard = ({ product, onAddToCart }) => {
               {product.originalPrice > product.price && (
                 <Text delete type="secondary">NT$ {product.originalPrice}</Text>
               )}
-              <Text type="secondary">/ {product.unit}</Text>
             </Space>
+            <Text type="secondary">產品計價單位：{product.unit}</Text>
             
             <Text type="secondary">庫存: {product.stock}</Text>
           </Space>
