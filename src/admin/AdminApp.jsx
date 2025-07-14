@@ -10,6 +10,7 @@ import PaymentManagement from './pages/PaymentManagement';
 import EmailManagement from './pages/EmailManagement';
 import CouponManagement from './pages/CouponManagement';
 import LogisticsManagement from './pages/LogisticsManagement';
+import SystemSettings from './pages/SystemSettings';
 
 const { Content, Sider } = Layout;
 
@@ -53,14 +54,7 @@ const AdminApp = ({ onBackToSite }) => {
           </div>
         );
       case 'settings':
-        return (
-          <div style={{ padding: '24px', textAlign: 'center', height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div>
-              <h2>⚙️ 系統設定</h2>
-              <p>功能開發中...</p>
-            </div>
-          </div>
-        );
+        return <SystemSettings />;
       default:
         return <AdminDashboard />;
     }

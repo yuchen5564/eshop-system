@@ -51,11 +51,15 @@ const CouponManagement = () => {
     loadStats();
   }, []);
 
-  const loadCoupons = () => {
+  const loadCoupons = async () => {
     setLoading(true);
     try {
-      const allCoupons = couponService.getAllCoupons();
-      setCoupons(allCoupons);
+      const result = await couponService.getAll();
+      if (result.success) {
+        setCoupons(result.data);
+      } else {
+        message.error('載入優惠券失敗');
+      }
     } catch (error) {
       message.error('載入優惠券失敗');
     } finally {
@@ -63,9 +67,15 @@ const CouponManagement = () => {
     }
   };
 
-  const loadStats = () => {
-    const statsData = couponService.getCouponStats();
-    setStats(statsData);
+  const loadStats = async () => {
+    try {
+      const result = await couponService.getCouponStats();
+      if (result.success) {
+        setStats(result.data);
+      }
+    } catch (error) {
+      console.error('載入統計資料失敗:', error);
+    }
   };
 
   const handleCreate = () => {
@@ -111,11 +121,21 @@ const CouponManagement = () => {
       };
 
       if (editingCoupon) {
-        couponService.updateCoupon(editingCoupon.code, couponData);
-        message.success('優惠券更新成功');
+        const result = await couponService.update(editingCoupon.id, couponData);
+        if (result.success) {
+          message.success('優惠券更新成功');
+        } else {
+          message.error('更新失敗');
+          return;
+        }
       } else {
-        couponService.createCoupon(couponData);
-        message.success('優惠券建立成功');
+        const result = await couponService.add(couponData);
+        if (result.success) {
+          message.success('優惠券建立成功');
+        } else {
+          message.error('建立失敗');
+          return;
+        }
       }
 
       setModalVisible(false);
@@ -128,12 +148,16 @@ const CouponManagement = () => {
     }
   };
 
-  const handleDelete = (code) => {
+  const handleDelete = async (couponId) => {
     try {
-      couponService.deleteCoupon(code);
-      message.success('優惠券刪除成功');
-      loadCoupons();
-      loadStats();
+      const result = await couponService.delete(couponId);
+      if (result.success) {
+        message.success('優惠券刪除成功');
+        loadCoupons();
+        loadStats();
+      } else {
+        message.error('刪除失敗');
+      }
     } catch (error) {
       message.error('刪除失敗');
     }
@@ -295,7 +319,7 @@ const CouponManagement = () => {
           </Tooltip>
           <Popconfirm
             title="確定要刪除此優惠券嗎？"
-            onConfirm={() => handleDelete(record.code)}
+            onConfirm={() => handleDelete(record.id)}
             okText="確定"
             cancelText="取消"
           >

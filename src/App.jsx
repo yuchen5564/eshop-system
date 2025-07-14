@@ -9,8 +9,12 @@ import AboutPage from './pages/AboutPage';
 import CheckoutPage from './pages/CheckoutPage';
 import AdminApp from './admin/AdminApp';
 import AlertNotification, { useAlerts } from './components/AlertNotification';
-import { mockProducts } from './data/mockData';
+import LoginForm from './components/LoginForm';
+import SystemInitPage from './components/SystemInitPage';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import productService from './services/productService';
 import categoryService from './services/categoryService';
+import systemService from './services/systemService';
 
 const { Content } = Layout;
 
@@ -24,20 +28,61 @@ const FarmEcommerce = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [systemInitialized, setSystemInitialized] = useState(null);
+  const [showLoginForm, setShowLoginForm] = useState(false);
   const { alerts, addSuccessAlert, addRemoveAlert, removeAlert } = useAlerts();
+  const { user, isAdminUser, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    setProducts(mockProducts);
-    loadCategories();
-  }, []);
+    if (!authLoading) {
+      checkSystemAndLoadData();
+    }
+  }, [authLoading]);
 
-  const loadCategories = () => {
-    const activeCategories = categoryService.getActiveCategories();
-    const categoriesWithAll = [
-      { id: 'all', name: '全部商品', icon: '🏠', color: '#1890ff' },
-      ...activeCategories
-    ];
-    setCategories(categoriesWithAll);
+  const checkSystemAndLoadData = async () => {
+    setLoading(true);
+    try {
+      // 檢查系統是否已初始化
+      const initStatus = await systemService.checkSystemInitialized();
+      setSystemInitialized(initStatus.initialized);
+      
+      if (initStatus.initialized) {
+        // 如果已初始化，載入數據
+        await Promise.all([loadProducts(), loadCategories()]);
+      }
+    } catch (error) {
+      console.error('檢查系統狀態失敗:', error);
+      setSystemInitialized(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadProducts = async () => {
+    try {
+      const result = await productService.getAll();
+      if (result.success) {
+        setProducts(result.data);
+      }
+    } catch (error) {
+      console.error('載入商品失敗:', error);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const result = await categoryService.getActiveCategories();
+      if (result.success) {
+        const categoriesWithAll = [
+          { id: 'all', name: '全部商品', icon: '🏠', color: '#1890ff' },
+          ...result.data
+        ];
+        setCategories(categoriesWithAll);
+      }
+    } catch (error) {
+      console.error('載入分類失敗:', error);
+    }
   };
 
   const filteredProducts = products.filter(product => {
@@ -106,6 +151,15 @@ const FarmEcommerce = () => {
 
   const handlePageChange = (page) => {
     if (page === 'admin') {
+      if (!user) {
+        // 如果沒有登入，顯示登入表單
+        setShowLoginForm(true);
+        return;
+      }
+      if (!isAdminUser) {
+        message.error('您沒有管理員權限');
+        return;
+      }
       setIsAdminMode(true);
     } else {
       setCurrentPage(page);
@@ -138,8 +192,54 @@ const FarmEcommerce = () => {
     setSelectedCategory(categoryId);
   };
 
-  // 如果是管理後台模式，直接返回管理後台組件
+  const handleSystemInitComplete = () => {
+    setSystemInitialized(true);
+    // 重新載入數據
+    checkSystemAndLoadData();
+  };
+
+  const handleLoginSuccess = (user) => {
+    setShowLoginForm(false);
+    setIsAdminMode(true);
+  };
+
+  // 如果還在載入認證狀態，顯示載入中
+  if (authLoading || loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div>載入中...</div>
+      </div>
+    );
+  }
+
+  // 如果系統未初始化，顯示初始化頁面
+  if (systemInitialized === false) {
+    return <SystemInitPage onInitComplete={handleSystemInitComplete} />;
+  }
+
+  // 如果要顯示登入表單
+  if (showLoginForm) {
+    return <LoginForm 
+      onLoginSuccess={handleLoginSuccess} 
+      onBack={() => setShowLoginForm(false)}
+    />;
+  }
+
+  // 如果是管理後台模式，檢查權限並顯示相應內容
   if (isAdminMode) {
+    if (!user) {
+      return <LoginForm 
+        onLoginSuccess={handleLoginSuccess} 
+        onBack={handleBackToSite}
+      />;
+    }
+    if (!isAdminUser) {
+      return (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <div>您沒有管理員權限</div>
+        </div>
+      );
+    }
     return <AdminApp onBackToSite={handleBackToSite} />;
   }
 
@@ -209,4 +309,13 @@ const FarmEcommerce = () => {
   );
 };
 
-export default FarmEcommerce;
+// 主應用組件，包含AuthProvider包裝器
+const App = () => {
+  return (
+    <AuthProvider>
+      <FarmEcommerce />
+    </AuthProvider>
+  );
+};
+
+export default App;

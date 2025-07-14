@@ -29,6 +29,7 @@ import {
 } from '@ant-design/icons';
 import emailService from '../services/emailService';
 import couponService from '../services/couponService';
+import orderService from '../services/orderService';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -112,6 +113,12 @@ const CheckoutPage = ({
         notes: data.notes || '',
         shippingInfo: null
       };
+
+      // 儲存訂單到 Firestore
+      const saveResult = await orderService.add(orderData);
+      if (!saveResult.success) {
+        throw new Error('訂單儲存失敗');
+      }
 
       // 使用優惠券
       if (appliedCoupon) {

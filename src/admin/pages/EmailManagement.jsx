@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Tabs,
@@ -25,8 +25,7 @@ import {
   SaveOutlined,
   FileTextOutlined
 } from '@ant-design/icons';
-import emailService from '../../services/emailService';
-import { mockEmailLogs } from '../data/mockAdminData';
+import { emailManagementService, emailTemplateService, emailLogService } from '../../services/emailManagementService';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -38,7 +37,22 @@ const EmailManagement = () => {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewContent, setPreviewContent] = useState('');
   const [loading, setLoading] = useState(false);
-  const [emailLogs] = useState(mockEmailLogs);
+  const [emailLogs, setEmailLogs] = useState([]);
+
+  useEffect(() => {
+    loadEmailLogs();
+  }, []);
+
+  const loadEmailLogs = async () => {
+    try {
+      const result = await emailLogService.getAll();
+      if (result.success) {
+        setEmailLogs(result.data);
+      }
+    } catch (error) {
+      console.error('載入郵件記錄失敗:', error);
+    }
+  };
 
   const [emailTemplates, setEmailTemplates] = useState({
     order_confirmation: {

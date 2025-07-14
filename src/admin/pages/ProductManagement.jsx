@@ -25,7 +25,7 @@ import {
   SearchOutlined,
   UploadOutlined
 } from '@ant-design/icons';
-import { mockProducts } from '../../data/mockData';
+import productService from '../../services/productService';
 import categoryService from '../../services/categoryService';
 
 const { Title, Text } = Typography;
@@ -33,22 +33,55 @@ const { Search } = Input;
 const { TextArea } = Input;
 
 const ProductManagement = () => {
-  const [products, setProducts] = useState(mockProducts);
+  const [products, setProducts] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchText, setSearchText] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [form] = Form.useForm();
 
   useEffect(() => {
-    loadCategories();
+    loadData();
   }, []);
 
-  const loadCategories = () => {
-    const activeCategories = categoryService.getActiveCategories();
-    setCategories(activeCategories);
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      await Promise.all([loadProducts(), loadCategories()]);
+    } catch (error) {
+      message.error('載入資料失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadProducts = async () => {
+    try {
+      const result = await productService.getAll();
+      if (result.success) {
+        setProducts(result.data);
+      } else {
+        message.error('載入商品失敗');
+      }
+    } catch (error) {
+      message.error('載入商品失敗');
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const result = await categoryService.getActiveCategories();
+      if (result.success) {
+        setCategories(result.data);
+      } else {
+        message.error('載入分類失敗');
+      }
+    } catch (error) {
+      message.error('載入分類失敗');
+    }
   };
 
   const handleAddProduct = () => {
@@ -63,9 +96,18 @@ const ProductManagement = () => {
     setIsModalVisible(true);
   };
 
-  const handleDeleteProduct = (productId) => {
-    setProducts(products.filter(p => p.id !== productId));
-    message.success('商品已刪除');
+  const handleDeleteProduct = async (productId) => {
+    try {
+      const result = await productService.delete(productId);
+      if (result.success) {
+        message.success('商品已刪除');
+        loadData(); // 重新載入數據
+      } else {
+        message.error('刪除商品失敗');
+      }
+    } catch (error) {
+      message.error('刪除商品失敗');
+    }
   };
 
   const handleSaveProduct = async () => {
@@ -74,39 +116,60 @@ const ProductManagement = () => {
       
       if (editingProduct) {
         // 編輯現有商品
-        setProducts(products.map(p => 
-          p.id === editingProduct.id 
-            ? { ...p, ...values }
-            : p
-        ));
-        message.success('商品已更新');
+        const result = await productService.update(editingProduct.id, values);
+        if (result.success) {
+          setProducts(products.map(p => 
+            p.id === editingProduct.id 
+              ? { ...p, ...values }
+              : p
+          ));
+          message.success('商品已更新');
+        } else {
+          message.error('更新商品失敗');
+          return;
+        }
       } else {
         // 添加新商品
         const newProduct = {
-          id: Math.max(...products.map(p => p.id)) + 1,
           ...values,
           rating: 0,
           reviews: 0,
           isActive: true
         };
-        setProducts([...products, newProduct]);
-        message.success('商品已添加');
+        const result = await productService.add(newProduct);
+        if (result.success) {
+          setProducts([...products, { id: result.id, ...newProduct }]);
+          message.success('商品已添加');
+        } else {
+          message.error('添加商品失敗');
+          return;
+        }
       }
       
       setIsModalVisible(false);
       form.resetFields();
     } catch (error) {
       console.error('Form validation failed:', error);
+      message.error('操作失敗');
     }
   };
 
-  const handleToggleStatus = (productId, newStatus) => {
-    setProducts(products.map(p => 
-      p.id === productId 
-        ? { ...p, isActive: newStatus }
-        : p
-    ));
-    message.success(newStatus ? '商品已上架' : '商品已下架');
+  const handleToggleStatus = async (productId, newStatus) => {
+    try {
+      const result = await productService.update(productId, { isActive: newStatus });
+      if (result.success) {
+        setProducts(products.map(p => 
+          p.id === productId 
+            ? { ...p, isActive: newStatus }
+            : p
+        ));
+        message.success(newStatus ? '商品已上架' : '商品已下架');
+      } else {
+        message.error('更新商品狀態失敗');
+      }
+    } catch (error) {
+      message.error('更新商品狀態失敗');
+    }
   };
 
   const filteredProducts = products.filter(product => {
@@ -285,6 +348,7 @@ const ProductManagement = () => {
           columns={columns}
           dataSource={filteredProducts}
           rowKey="id"
+          loading={loading}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,

@@ -1,146 +1,133 @@
-class CategoryService {
+import FirestoreService from './firestoreService';
+
+class CategoryService extends FirestoreService {
   constructor() {
-    this.categories = new Map();
-    this.initializeDefaultCategories();
+    super('categories');
   }
 
-  initializeDefaultCategories() {
-    const defaultCategories = [
-      {
-        id: 'vegetable',
-        name: '蔬菜類',
-        description: '新鮮蔬菜，健康營養',
-        color: '#52c41a',
-        icon: '🥬',
-        image: null,
-        isActive: true,
-        sortOrder: 1,
-        createdAt: '2025-01-01T00:00:00Z'
-      },
-      {
-        id: 'fruit',
-        name: '水果類',
-        description: '當季新鮮水果',
-        color: '#fa8c16',
-        icon: '🍎',
-        image: null,
-        isActive: true,
-        sortOrder: 2,
-        createdAt: '2025-01-01T00:00:00Z'
-      },
-      {
-        id: 'grain',
-        name: '穀物類',
-        description: '優質穀物米糧',
-        color: '#fadb14',
-        icon: '🌾',
-        image: null,
-        isActive: true,
-        sortOrder: 3,
-        createdAt: '2025-01-01T00:00:00Z'
+  // 獲取啟用的分類
+  async getActiveCategories() {
+    return await this.getWhere('isActive', '==', true);
+  }
+
+  // 獲取父分類
+  async getParentCategories() {
+    return await this.getWhere('parentId', '==', null);
+  }
+
+  // 獲取子分類
+  async getChildCategories(parentId) {
+    return await this.getWhere('parentId', '==', parentId);
+  }
+
+  // 獲取分類樹
+  async getCategoryTree() {
+    try {
+      const allCategories = await this.getAll('sortOrder', 'asc');
+      
+      if (!allCategories.success) {
+        return allCategories;
       }
-    ];
-
-    defaultCategories.forEach(category => {
-      this.categories.set(category.id, category);
-    });
+      
+      const categories = allCategories.data;
+      const tree = [];
+      
+      // 建立父分類
+      const parentCategories = categories.filter(cat => !cat.parentId);
+      
+      parentCategories.forEach(parent => {
+        const children = categories.filter(cat => cat.parentId === parent.id);
+        tree.push({
+          ...parent,
+          children: children
+        });
+      });
+      
+      return { success: true, data: tree };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
   }
 
-  // 獲取所有類別
-  getAllCategories() {
-    return Array.from(this.categories.values()).sort((a, b) => a.sortOrder - b.sortOrder);
-  }
-
-  // 獲取啟用的類別
-  getActiveCategories() {
-    return this.getAllCategories().filter(category => category.isActive);
-  }
-
-  // 根據ID獲取類別
-  getCategoryById(id) {
-    return this.categories.get(id);
-  }
-
-  // 新增類別
-  createCategory(categoryData) {
-    const newCategory = {
-      ...categoryData,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    this.categories.set(newCategory.id, newCategory);
-    return newCategory;
-  }
-
-  // 更新類別
-  updateCategory(id, updates) {
-    const category = this.categories.get(id);
-    if (!category) return null;
-
-    const updatedCategory = {
-      ...category,
-      ...updates,
-      updatedAt: new Date().toISOString()
-    };
-    
-    this.categories.set(id, updatedCategory);
-    return updatedCategory;
-  }
-
-  // 刪除類別
-  deleteCategory(id) {
-    return this.categories.delete(id);
-  }
-
-  // 切換類別啟用狀態
-  toggleCategoryStatus(id, isActive) {
-    return this.updateCategory(id, { isActive });
+  // 切換分類啟用狀態
+  async toggleCategoryStatus(id, isActive) {
+    return await this.update(id, { isActive });
   }
 
   // 更新排序
-  updateSortOrder(id, sortOrder) {
-    return this.updateCategory(id, { sortOrder });
+  async updateSortOrder(id, sortOrder) {
+    return await this.update(id, { sortOrder });
   }
 
-  // 獲取類別選項（用於下拉選單）
-  getCategoryOptions() {
-    return this.getActiveCategories().map(category => ({
-      value: category.id,
-      label: category.name,
-      icon: category.icon,
-      color: category.color
-    }));
+  // 獲取分類選項（用於下拉選單）
+  async getCategoryOptions() {
+    try {
+      const activeCategories = await this.getActiveCategories();
+      
+      if (!activeCategories.success) {
+        return activeCategories;
+      }
+      
+      const options = activeCategories.data.map(category => ({
+        value: category.id,
+        label: category.name,
+        icon: category.icon,
+        color: category.color
+      }));
+      
+      return { success: true, data: options };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
   }
 
-  // 獲取類別統計
-  getCategoryStats() {
-    const allCategories = this.getAllCategories();
-    const activeCategories = allCategories.filter(c => c.isActive);
-    
-    return {
-      total: allCategories.length,
-      active: activeCategories.length,
-      inactive: allCategories.length - activeCategories.length
-    };
+  // 獲取分類統計
+  async getCategoryStats() {
+    try {
+      const allCategories = await this.getAll();
+      
+      if (!allCategories.success) {
+        return allCategories;
+      }
+      
+      const categories = allCategories.data;
+      const activeCategories = categories.filter(c => c.isActive);
+      
+      const stats = {
+        total: categories.length,
+        active: activeCategories.length,
+        inactive: categories.length - activeCategories.length
+      };
+      
+      return { success: true, data: stats };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
   }
 
-  // 檢查類別是否存在
-  categoryExists(id) {
-    return this.categories.has(id);
+  // 搜尋分類
+  async searchCategories(searchTerm) {
+    try {
+      const allCategories = await this.getAll();
+      
+      if (!allCategories.success) {
+        return allCategories;
+      }
+      
+      const term = searchTerm.toLowerCase();
+      const filteredCategories = allCategories.data.filter(category =>
+        category.name.toLowerCase().includes(term) ||
+        category.description.toLowerCase().includes(term) ||
+        category.id.toLowerCase().includes(term)
+      );
+      
+      return { success: true, data: filteredCategories };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
   }
 
-  // 根據名稱搜尋類別
-  searchCategories(searchTerm) {
-    const term = searchTerm.toLowerCase();
-    return this.getAllCategories().filter(category =>
-      category.name.toLowerCase().includes(term) ||
-      category.description.toLowerCase().includes(term) ||
-      category.id.toLowerCase().includes(term)
-    );
-  }
-
-  // 驗證類別數據
+  // 驗證分類數據
   validateCategory(categoryData) {
     const errors = [];
     
@@ -174,6 +161,49 @@ class CategoryService {
       isValid: errors.length === 0,
       errors
     };
+  }
+
+  // 初始化默認分類
+  async initializeDefaultCategories() {
+    const defaultCategories = [
+      {
+        id: 'vegetable',
+        name: '蔬菜類',
+        description: '新鮮蔬菜，健康營養',
+        color: '#52c41a',
+        icon: '🥬',
+        image: null,
+        isActive: true,
+        sortOrder: 1,
+        parentId: null
+      },
+      {
+        id: 'fruit',
+        name: '水果類',
+        description: '當季新鮮水果',
+        color: '#fa8c16',
+        icon: '🍎',
+        image: null,
+        isActive: true,
+        sortOrder: 2,
+        parentId: null
+      },
+      {
+        id: 'grain',
+        name: '穀物類',
+        description: '優質穀物米糧',
+        color: '#fadb14',
+        icon: '🌾',
+        image: null,
+        isActive: true,
+        sortOrder: 3,
+        parentId: null
+      }
+    ];
+
+    for (const category of defaultCategories) {
+      await this.add(category);
+    }
   }
 }
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Table,
@@ -9,23 +9,49 @@ import {
   Input,
   Modal,
   message,
-  Popconfirm
+  Popconfirm,
+  Tabs,
+  Switch,
+  InputNumber,
+  Select
 } from 'antd';
 import {
   TruckOutlined,
   EditOutlined,
   DeleteOutlined,
-  PlusOutlined
+  PlusOutlined,
+  SettingOutlined
 } from '@ant-design/icons';
-import { shippingCarriers } from '../data/mockAdminData';
+import { logisticsService } from '../../services/logisticsService';
 
 const { Title, Text } = Typography;
 
 const LogisticsManagement = () => {
-  const [carriers, setCarriers] = useState(shippingCarriers);
+  const [carriers, setCarriers] = useState([]);
   const [carrierModalVisible, setCarrierModalVisible] = useState(false);
   const [editingCarrier, setEditingCarrier] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    loadCarriers();
+  }, []);
+
+  const loadCarriers = async () => {
+    setLoading(true);
+    try {
+      const result = await logisticsService.getShippingCarriers();
+      if (result.success) {
+        setCarriers(result.data);
+      } else {
+        message.error('載入貨運公司失敗');
+      }
+    } catch (error) {
+      message.error('載入貨運公司失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAddCarrier = () => {
     setEditingCarrier(null);
@@ -39,28 +65,51 @@ const LogisticsManagement = () => {
     setCarrierModalVisible(true);
   };
 
-  const handleCarrierSubmit = (values) => {
-    if (editingCarrier) {
-      setCarriers(carriers.map(c => 
-        c.value === editingCarrier.value ? { ...c, ...values } : c
-      ));
-      message.success('貨運公司資訊已更新');
-    } else {
-      const newCarrier = {
-        value: values.value,
-        label: values.label,
-        trackingUrlTemplate: values.trackingUrlTemplate
-      };
-      setCarriers([...carriers, newCarrier]);
-      message.success('貨運公司已新增');
+  const handleCarrierSubmit = async (values) => {
+    try {
+      if (editingCarrier) {
+        const result = await logisticsService.updateShippingCarrier(editingCarrier.value, values);
+        if (result.success) {
+          message.success('貨運公司資訊已更新');
+          loadCarriers();
+        } else {
+          message.error('更新失敗');
+          return;
+        }
+      } else {
+        const newCarrier = {
+          value: values.value,
+          label: values.label,
+          trackingUrlTemplate: values.trackingUrlTemplate
+        };
+        const result = await logisticsService.addShippingCarrier(newCarrier);
+        if (result.success) {
+          message.success('貨運公司已新增');
+          loadCarriers();
+        } else {
+          message.error('新增失敗');
+          return;
+        }
+      }
+      setCarrierModalVisible(false);
+      form.resetFields();
+    } catch (error) {
+      message.error('操作失敗：' + error.message);
     }
-    setCarrierModalVisible(false);
-    form.resetFields();
   };
 
-  const handleDeleteCarrier = (carrierValue) => {
-    setCarriers(carriers.filter(c => c.value !== carrierValue));
-    message.success('貨運公司已刪除');
+  const handleDeleteCarrier = async (carrierValue) => {
+    try {
+      const result = await logisticsService.deleteShippingCarrier(carrierValue);
+      if (result.success) {
+        message.success('貨運公司已刪除');
+        loadCarriers();
+      } else {
+        message.error('刪除失敗');
+      }
+    } catch (error) {
+      message.error('刪除失敗：' + error.message);
+    }
   };
 
   const columns = [
@@ -136,6 +185,7 @@ const LogisticsManagement = () => {
           columns={columns}
           dataSource={carriers}
           rowKey="value"
+          loading={loading}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,

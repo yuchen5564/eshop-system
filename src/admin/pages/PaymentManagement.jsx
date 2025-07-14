@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Switch,
@@ -15,7 +15,8 @@ import {
   Divider,
   Tag,
   message,
-  Alert
+  Alert,
+  Popconfirm
 } from 'antd';
 import {
   CreditCardOutlined,
@@ -23,18 +24,40 @@ import {
   WalletOutlined,
   SettingOutlined,
   EditOutlined,
-  PlusOutlined
+  PlusOutlined,
+  DeleteOutlined
 } from '@ant-design/icons';
-import { mockPaymentMethods } from '../data/mockAdminData';
+import paymentService from '../../services/paymentService';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
 const PaymentManagement = () => {
-  const [paymentMethods, setPaymentMethods] = useState(mockPaymentMethods);
+  const [paymentMethods, setPaymentMethods] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMethod, setEditingMethod] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    loadPaymentMethods();
+  }, []);
+
+  const loadPaymentMethods = async () => {
+    setLoading(true);
+    try {
+      const result = await paymentService.getAll();
+      if (result.success) {
+        setPaymentMethods(result.data);
+      } else {
+        message.error('載入付款方式失敗');
+      }
+    } catch (error) {
+      message.error('載入付款方式失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getPaymentIcon = (type) => {
     switch (type) {
@@ -59,24 +82,35 @@ const PaymentManagement = () => {
     return <Tag color={typeInfo.color}>{typeInfo.text}</Tag>;
   };
 
-  const handleToggleEnabled = (methodId) => {
-    setPaymentMethods(methods =>
-      methods.map(method =>
-        method.id === methodId
-          ? { ...method, enabled: !method.enabled }
-          : method
-      )
-    );
+  const handleToggleEnabled = async (methodId) => {
     const method = paymentMethods.find(m => m.id === methodId);
-    message.success(`${method.name} 已${method.enabled ? '停用' : '啟用'}`);
+    const newStatus = !method.enabled;
+    
+    try {
+      const result = await paymentService.update(methodId, { enabled: newStatus });
+      if (result.success) {
+        setPaymentMethods(methods =>
+          methods.map(method =>
+            method.id === methodId
+              ? { ...method, enabled: newStatus }
+              : method
+          )
+        );
+        message.success(`${method.name} 已${newStatus ? '啟用' : '停用'}`);
+      } else {
+        message.error('狀態更新失敗');
+      }
+    } catch (error) {
+      message.error('狀態更新失敗：' + error.message);
+    }
   };
 
   const handleEditMethod = (method) => {
     setEditingMethod(method);
     form.setFieldsValue({
       ...method,
-      fixedFee: method.fees.fixed,
-      percentageFee: method.fees.percentage
+      fixedFee: method.fees?.fixed || (method.settings?.processingFee ? method.settings.processingFee * 100 : 0),
+      percentageFee: method.fees?.percentage || 0
     });
     setIsModalVisible(true);
   };
@@ -100,29 +134,48 @@ const PaymentManagement = () => {
       };
 
       if (editingMethod) {
-        setPaymentMethods(methods =>
-          methods.map(method =>
-            method.id === editingMethod.id
-              ? { ...method, ...methodData }
-              : method
-          )
-        );
-        message.success('付款方式已更新');
+        const result = await paymentService.update(editingMethod.id, methodData);
+        if (result.success) {
+          message.success('付款方式已更新');
+          loadPaymentMethods();
+        } else {
+          message.error('更新失敗');
+          return;
+        }
       } else {
         const newMethod = {
-          id: `payment_${Date.now()}`,
           ...methodData,
           enabled: true,
           config: {}
         };
-        setPaymentMethods([...paymentMethods, newMethod]);
-        message.success('付款方式已添加');
+        const result = await paymentService.add(newMethod);
+        if (result.success) {
+          message.success('付款方式已添加');
+          loadPaymentMethods();
+        } else {
+          message.error('新增失敗');
+          return;
+        }
       }
       
       setIsModalVisible(false);
       form.resetFields();
     } catch (error) {
       console.error('Form validation failed:', error);
+    }
+  };
+
+  const handleDeleteMethod = async (methodId) => {
+    try {
+      const result = await paymentService.delete(methodId);
+      if (result.success) {
+        message.success('付款方式已刪除');
+        loadPaymentMethods();
+      } else {
+        message.error('刪除失敗');
+      }
+    } catch (error) {
+      message.error('刪除失敗：' + error.message);
     }
   };
 
@@ -177,47 +230,66 @@ const PaymentManagement = () => {
                 <div style={{ marginBottom: '16px' }}>
                   <Text strong>手續費設定：</Text>
                   <div style={{ marginTop: '8px' }}>
-                    {method.fees.fixed > 0 && (
-                      <Tag color="blue">固定費用: NT$ {method.fees.fixed}</Tag>
+                    {(method.fees?.fixed || method.settings?.processingFee) > 0 && (
+                      <Tag color="blue">
+                        固定費用: NT$ {method.fees?.fixed || (method.settings?.processingFee * 100) || 0}
+                      </Tag>
                     )}
-                    {method.fees.percentage > 0 && (
+                    {method.fees?.percentage > 0 && (
                       <Tag color="green">百分比: {method.fees.percentage}%</Tag>
                     )}
-                    {method.fees.fixed === 0 && method.fees.percentage === 0 && (
+                    {(!method.fees?.fixed && !method.fees?.percentage && !method.settings?.processingFee) && (
                       <Tag color="gold">免手續費</Tag>
                     )}
                   </div>
                 </div>
 
                 {/* 配置信息 */}
-                {method.config && Object.keys(method.config).length > 0 && (
+                {(method.config || method.settings) && (
                   <div style={{ marginBottom: '16px' }}>
                     <Text strong>配置信息：</Text>
                     <div style={{ marginTop: '8px', background: '#f5f5f5', padding: '8px', borderRadius: '4px' }}>
-                      {method.type === 'online' && method.config.supportedCards && (
-                        <div>支援卡片: {method.config.supportedCards.join(', ')}</div>
+                      {method.type === 'online' && method.settings?.supportedCards && (
+                        <div>支援卡片: {method.settings.supportedCards.join(', ')}</div>
                       )}
-                      {method.type === 'offline' && method.config.bankName && (
+                      {method.type === 'offline' && method.settings?.bankName && (
                         <div>
-                          <div>銀行: {method.config.bankName}</div>
-                          <div>帳號: {method.config.accountNumber}</div>
-                          <div>戶名: {method.config.accountName}</div>
+                          <div>銀行: {method.settings.bankName}</div>
+                          <div>帳號: {method.settings.accountNumber}</div>
+                          <div>戶名: {method.settings.accountName}</div>
                         </div>
                       )}
-                      {method.type === 'cash' && method.config.availableAreas && (
-                        <div>服務區域: {method.config.availableAreas.join(', ')}</div>
+                      {method.type === 'cash' && method.settings?.availableAreas && (
+                        <div>服務區域: {method.settings.availableAreas.join(', ')}</div>
+                      )}
+                      {method.settings?.processingTime && (
+                        <div>處理時間: {method.settings.processingTime}</div>
                       )}
                     </div>
                   </div>
                 )}
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                   <Button
                     icon={<EditOutlined />}
                     onClick={() => handleEditMethod(method)}
                   >
                     編輯設定
                   </Button>
+                  <Popconfirm
+                    title="確定要刪除此付款方式嗎？"
+                    description="刪除後將無法復原。"
+                    onConfirm={() => handleDeleteMethod(method.id)}
+                    okText="確定"
+                    cancelText="取消"
+                  >
+                    <Button
+                      danger
+                      icon={<DeleteOutlined />}
+                    >
+                      刪除
+                    </Button>
+                  </Popconfirm>
                 </div>
               </Card>
             </Col>

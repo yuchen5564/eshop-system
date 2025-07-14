@@ -28,15 +28,27 @@ const CategoryManagement = () => {
   const [categories, setCategories] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [form] = Form.useForm();
 
   useEffect(() => {
     loadCategories();
   }, []);
 
-  const loadCategories = () => {
-    const allCategories = categoryService.getAllCategories();
-    setCategories(allCategories);
+  const loadCategories = async () => {
+    setLoading(true);
+    try {
+      const result = await categoryService.getAll();
+      if (result.success) {
+        setCategories(result.data);
+      } else {
+        message.error('載入分類失敗');
+      }
+    } catch (error) {
+      message.error('載入分類失敗');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCreate = () => {
@@ -59,7 +71,7 @@ const CategoryManagement = () => {
     setModalVisible(true);
   };
 
-  const handleSubmit = (values) => {
+  const handleSubmit = async (values) => {
     const categoryData = {
       ...values,
       color: typeof values.color === 'string' ? values.color : values.color.toHexString()
@@ -74,23 +86,21 @@ const CategoryManagement = () => {
 
     try {
       if (editingCategory) {
-        // 檢查新的 ID 是否與其他類別衝突（如果 ID 被修改）
-        if (categoryData.id !== editingCategory.id && categoryService.categoryExists(categoryData.id)) {
-          message.error('類別代碼已存在');
+        const result = await categoryService.update(editingCategory.id, categoryData);
+        if (result.success) {
+          message.success('產品類別已更新');
+        } else {
+          message.error('更新失敗');
           return;
         }
-        
-        categoryService.updateCategory(editingCategory.id, categoryData);
-        message.success('產品類別已更新');
       } else {
-        // 檢查 ID 是否已存在
-        if (categoryService.categoryExists(categoryData.id)) {
-          message.error('類別代碼已存在');
+        const result = await categoryService.add(categoryData);
+        if (result.success) {
+          message.success('產品類別已新增');
+        } else {
+          message.error('新增失敗');
           return;
         }
-        
-        categoryService.createCategory(categoryData);
-        message.success('產品類別已新增');
       }
 
       loadCategories();
@@ -101,31 +111,43 @@ const CategoryManagement = () => {
     }
   };
 
-  const handleDelete = (categoryId) => {
+  const handleDelete = async (categoryId) => {
     try {
-      categoryService.deleteCategory(categoryId);
-      loadCategories();
-      message.success('產品類別已刪除');
+      const result = await categoryService.delete(categoryId);
+      if (result.success) {
+        loadCategories();
+        message.success('產品類別已刪除');
+      } else {
+        message.error('刪除失敗');
+      }
     } catch (error) {
       message.error('刪除失敗：' + error.message);
     }
   };
 
-  const handleToggleActive = (categoryId, isActive) => {
+  const handleToggleActive = async (categoryId, isActive) => {
     try {
-      categoryService.toggleCategoryStatus(categoryId, isActive);
-      loadCategories();
-      message.success(`類別已${isActive ? '啟用' : '停用'}`);
+      const result = await categoryService.toggleCategoryStatus(categoryId, isActive);
+      if (result.success) {
+        loadCategories();
+        message.success(`類別已${isActive ? '啟用' : '停用'}`);
+      } else {
+        message.error('狀態更新失敗');
+      }
     } catch (error) {
       message.error('狀態更新失敗：' + error.message);
     }
   };
 
-  const handleSortChange = (categoryId, newSortOrder) => {
+  const handleSortChange = async (categoryId, newSortOrder) => {
     try {
-      categoryService.updateSortOrder(categoryId, newSortOrder);
-      loadCategories();
-      message.success('排序已更新');
+      const result = await categoryService.updateSortOrder(categoryId, newSortOrder);
+      if (result.success) {
+        loadCategories();
+        message.success('排序已更新');
+      } else {
+        message.error('排序更新失敗');
+      }
     } catch (error) {
       message.error('排序更新失敗：' + error.message);
     }
@@ -206,7 +228,12 @@ const CategoryManagement = () => {
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 150,
-      render: (date) => new Date(date).toLocaleDateString('zh-TW')
+      render: (date) => {
+        if (date && date.seconds) {
+          return new Date(date.seconds * 1000).toLocaleDateString('zh-TW');
+        }
+        return date ? new Date(date).toLocaleDateString('zh-TW') : '-';
+      }
     },
     {
       title: '操作',
@@ -256,6 +283,7 @@ const CategoryManagement = () => {
           columns={columns}
           dataSource={categories.sort((a, b) => a.sortOrder - b.sortOrder)}
           rowKey="id"
+          loading={loading}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,
