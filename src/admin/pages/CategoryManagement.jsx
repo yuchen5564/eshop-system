@@ -94,7 +94,7 @@ const CategoryManagement = () => {
           return;
         }
       } else {
-        const result = await categoryService.add(categoryData);
+        const result = await categoryService.addWithId(categoryData.id, categoryData);
         if (result.success) {
           message.success('產品類別已新增');
         } else {
@@ -127,14 +127,25 @@ const CategoryManagement = () => {
 
   const handleToggleActive = async (categoryId, isActive) => {
     try {
+      console.log('Toggling category:', categoryId, 'to', isActive);
+      
+      // 先檢查類別是否存在
+      const existsResult = await categoryService.exists(categoryId);
+      if (!existsResult.success || !existsResult.exists) {
+        message.error(`類別 "${categoryId}" 不存在，請重新載入頁面`);
+        loadCategories(); // 重新載入數據
+        return;
+      }
+      
       const result = await categoryService.toggleCategoryStatus(categoryId, isActive);
       if (result.success) {
         loadCategories();
         message.success(`類別已${isActive ? '啟用' : '停用'}`);
       } else {
-        message.error('狀態更新失敗');
+        message.error('狀態更新失敗: ' + result.error);
       }
     } catch (error) {
+      console.error('Toggle category active error:', error);
       message.error('狀態更新失敗：' + error.message);
     }
   };

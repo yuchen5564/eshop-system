@@ -108,15 +108,24 @@ const CouponManagement = () => {
     try {
       const [validFrom, validTo] = values.validPeriod || [];
       
+      // 確保所有數據都是可序列化的
       const couponData = {
-        ...values,
-        validFrom: validFrom?.toISOString(),
-        validTo: validTo?.toISOString(),
-        applicableCategories: values.applicableCategories || [],
-        excludedProducts: values.excludedProducts || [],
-        userRestrictions: values.userRestrictions || {
-          newUsersOnly: false,
-          maxUsagePerUser: 1
+        code: values.code?.toUpperCase() || '',
+        name: values.name || '',
+        description: values.description || '',
+        type: values.type || 'fixed',
+        value: Number(values.value) || 0,
+        minimumAmount: Number(values.minimumAmount) || 0,
+        maximumDiscount: values.maximumDiscount ? Number(values.maximumDiscount) : null,
+        usageLimit: values.usageLimit ? Number(values.usageLimit) : null,
+        validFrom: validFrom?.toISOString() || new Date().toISOString(),
+        validTo: validTo?.toISOString() || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        isActive: Boolean(values.isActive ?? true),
+        applicableCategories: Array.isArray(values.applicableCategories) ? values.applicableCategories : [],
+        excludedProducts: Array.isArray(values.excludedProducts) ? values.excludedProducts : [],
+        userRestrictions: {
+          newUsersOnly: Boolean(values.userRestrictions?.newUsersOnly ?? false),
+          maxUsagePerUser: Number(values.userRestrictions?.maxUsagePerUser) || 1
         }
       };
 

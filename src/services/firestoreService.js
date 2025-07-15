@@ -26,8 +26,9 @@ class FirestoreService {
   // 添加文檔（自動生成ID）
   async add(data) {
     try {
+      const cleanedData = this.cleanData(data);
       const docRef = await addDoc(this.collectionRef, {
-        ...data,
+        ...cleanedData,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -39,15 +40,49 @@ class FirestoreService {
     }
   }
 
+  // 清理數據，移除不可序列化的對象
+  cleanData(data) {
+    const cleanedData = {};
+    
+    for (const [key, value] of Object.entries(data)) {
+      if (value === null || value === undefined) {
+        cleanedData[key] = value;
+      } else if (Array.isArray(value)) {
+        cleanedData[key] = value.map(item => 
+          typeof item === 'object' && item !== null ? this.cleanData(item) : item
+        );
+      } else if (typeof value === 'object' && value !== null) {
+        // 檢查是否是 Moment.js 對象或其他時間對象
+        if (typeof value.toISOString === 'function') {
+          cleanedData[key] = value.toISOString();
+        } else if (typeof value.toDate === 'function') {
+          cleanedData[key] = value.toDate().toISOString();
+        } else if (value.constructor && value.constructor.name === 'Moment') {
+          cleanedData[key] = value.toISOString();
+        } else {
+          // 遞歸清理嵌套對象
+          cleanedData[key] = this.cleanData(value);
+        }
+      } else {
+        cleanedData[key] = value;
+      }
+    }
+    
+    return cleanedData;
+  }
+
   // 添加或更新文檔（使用指定ID）
   async addWithId(id, data, merge = false) {
     try {
       const docRef = doc(db, this.collectionName, id);
+      const cleanedData = this.cleanData(data);
       const docData = {
-        ...data,
+        ...cleanedData,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
+      
+      console.log(`Setting document in ${this.collectionName} with ID: ${id}`, docData);
       
       if (merge) {
         await setDoc(docRef, docData, { merge: true });
@@ -78,8 +113,9 @@ class FirestoreService {
         throw new Error(`Document with ID '${id}' not found in collection '${this.collectionName}'`);
       }
       
+      const cleanedData = this.cleanData(data);
       await updateDoc(docRef, {
-        ...data,
+        ...cleanedData,
         updatedAt: serverTimestamp()
       });
       
