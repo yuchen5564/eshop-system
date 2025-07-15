@@ -48,6 +48,8 @@ const CheckoutPage = ({
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState([]);
+  const [orderSuccessModalVisible, setOrderSuccessModalVisible] = useState(false);
+  const [orderResult, setOrderResult] = useState(null);
 
   const shippingFee = 100;
   const subtotal = getTotalPrice();
@@ -205,25 +207,12 @@ const CheckoutPage = ({
         console.warn('Failed to update email status:', updateError);
       }
       
-      // 無論郵件是否成功，都顯示訂單成功頁面
-      Modal.success({
-        title: '訂單提交成功！',
-        content: (
-          <div>
-            <p>您的訂單編號：<Text strong>{orderId}</Text></p>
-            <p>我們將盡快為您處理訂單，感謝您的購買！</p>
-            {emailResult.success ? (
-              <p style={{ color: '#52c41a' }}>✅ 訂單確認郵件已發送至您的信箱</p>
-            ) : (
-              <p style={{ color: '#faad14' }}>⚠️ 訂單已建立，但郵件發送可能有延遲</p>
-            )}
-          </div>
-        ),
-        onOk: () => {
-          onOrderComplete?.();
-          onPageChange('home');
-        }
+      // 設置訂單結果並顯示成功 Modal
+      setOrderResult({
+        orderId,
+        emailSuccess: emailResult.success
       });
+      setOrderSuccessModalVisible(true);
       
       message.success('訂單已成功提交！');
     } catch (error) {
@@ -531,6 +520,62 @@ const CheckoutPage = ({
           </Col>
         </Row>
       </div>
+      
+      {/* 訂單成功 Modal */}
+      <Modal
+        title={
+          <div style={{ textAlign: 'center' }}>
+            <CheckCircleOutlined style={{ color: '#52c41a', fontSize: '48px', marginBottom: '16px' }} />
+            <div>訂單提交成功！</div>
+          </div>
+        }
+        open={orderSuccessModalVisible}
+        onOk={() => {
+          setOrderSuccessModalVisible(false);
+          onOrderComplete?.();
+          onPageChange('home');
+        }}
+        onCancel={() => {
+          setOrderSuccessModalVisible(false);
+          onOrderComplete?.();
+          onPageChange('home');
+        }}
+        okText="返回首頁"
+        cancelText="繼續購物"
+        centered
+        width={500}
+      >
+        {orderResult && (
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ fontSize: '16px', marginBottom: '16px' }}>
+              您的訂單編號：<Text strong style={{ color: '#1890ff' }}>{orderResult.orderId}</Text>
+            </p>
+            <p style={{ marginBottom: '16px' }}>
+              我們將盡快為您處理訂單，感謝您的購買！
+            </p>
+            {orderResult.emailSuccess ? (
+              <p style={{ color: '#52c41a', marginBottom: '8px' }}>
+                ✅ 訂單確認郵件已發送至您的信箱
+              </p>
+            ) : (
+              <p style={{ color: '#faad14', marginBottom: '8px' }}>
+                ⚠️ 訂單已建立，但郵件發送可能有延遲
+              </p>
+            )}
+            <div style={{ 
+              background: '#f6ffed', 
+              border: '1px solid #b7eb8f', 
+              borderRadius: '6px', 
+              padding: '12px', 
+              marginTop: '16px',
+              fontSize: '14px',
+              color: '#389e0d'
+            }}>
+              💡 您可以隨時聯繫我們查詢訂單狀態
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
