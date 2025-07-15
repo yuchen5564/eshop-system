@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Layout, Button, Dropdown, Avatar, Space, Typography, Modal, message } from 'antd';
 import {
   MenuUnfoldOutlined,
@@ -6,7 +6,8 @@ import {
   UserOutlined,
   LogoutOutlined,
   SettingOutlined,
-  BellOutlined
+  BellOutlined,
+  DownOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { signOutUser } from '../../services/authService';
@@ -16,33 +17,47 @@ const { Text } = Typography;
 
 const AdminHeader = ({ collapsed, onToggleCollapse, onBackToSite, style }) => {
   const { user } = useAuth();
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
   const handleLogout = () => {
-    Modal.confirm({
-      title: '確認登出',
-      content: '您確定要登出管理後台嗎？',
-      okText: '確定',
-      cancelText: '取消',
-      onOk: async () => {
-        try {
-          const result = await signOutUser();
-          if (result.success) {
-            console.log('Logout successful');
-            message.success('登出成功');
-            // 登出後會自動觸發AuthContext的狀態更新，回到登入頁面
-          } else {
-            console.log('Logout failed:', result.error);
-            message.error('登出失敗');
-          }
-        } catch (error) {
-          console.log('Logout error:', error);
-          message.error('登出失敗');
-        }
+    console.log('handleLogout called');
+    setLogoutModalVisible(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    console.log('Logout confirmed');
+    setLogoutLoading(true);
+    try {
+      const result = await signOutUser();
+      console.log('signOutUser result:', result);
+      if (result.success) {
+        console.log('Logout successful');
+        message.success('登出成功');
+        setLogoutModalVisible(false);
+        // 登出後返回主網站
+        setTimeout(() => {
+          onBackToSite();
+        }, 500);
+      } else {
+        console.log('Logout failed:', result.error);
+        message.error('登出失敗');
       }
-    });
+    } catch (error) {
+      console.log('Logout error:', error);
+      message.error('登出失敗');
+    } finally {
+      setLogoutLoading(false);
+    }
+  };
+
+  const handleLogoutCancel = () => {
+    console.log('Logout cancelled');
+    setLogoutModalVisible(false);
   };
 
   const handleMenuClick = ({ key }) => {
+    console.log('Menu item clicked:', key);
     switch (key) {
       case 'logout':
         handleLogout();
@@ -56,6 +71,7 @@ const AdminHeader = ({ collapsed, onToggleCollapse, onBackToSite, style }) => {
         message.info('設定功能開發中...');
         break;
       default:
+        console.log('Unknown menu key:', key);
         break;
     }
   };
@@ -124,6 +140,7 @@ const AdminHeader = ({ collapsed, onToggleCollapse, onBackToSite, style }) => {
           menu={{ items: userMenuItems, onClick: handleMenuClick }}
           placement="bottomRight"
           arrow
+          trigger={['click']}
         >
           <div style={{ 
             display: 'flex', 
@@ -132,13 +149,38 @@ const AdminHeader = ({ collapsed, onToggleCollapse, onBackToSite, style }) => {
             cursor: 'pointer',
             padding: '4px 8px',
             borderRadius: '6px',
-            transition: 'background-color 0.2s'
-          }}>
+            transition: 'background-color 0.2s',
+            ':hover': {
+              backgroundColor: '#f0f0f0'
+            }
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#f0f0f0';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
+          >
             <Avatar size="small" icon={<UserOutlined />} />
             <Text>{user?.displayName || user?.email || '管理員'}</Text>
+            <DownOutlined style={{ fontSize: '12px', marginLeft: '4px' }} />
           </div>
         </Dropdown>
       </div>
+      
+      {/* 登出確認 Modal */}
+      <Modal
+        title="確認登出"
+        open={logoutModalVisible}
+        onOk={handleLogoutConfirm}
+        onCancel={handleLogoutCancel}
+        confirmLoading={logoutLoading}
+        okText="確定"
+        cancelText="取消"
+        centered
+      >
+        <p>您確定要登出管理後台嗎？</p>
+      </Modal>
     </Header>
   );
 };
