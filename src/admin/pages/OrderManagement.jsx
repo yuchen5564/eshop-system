@@ -108,15 +108,28 @@ const OrderManagement = () => {
   const showShippingModal = (order) => {
     setSelectedOrder(order);
     setIsShippingModalVisible(true);
+
     if (order.shippingInfo) {
+      const {
+        carrier = '',
+        trackingNumber = '',
+        estimatedDelivery = '',
+        notes = ''
+      } = order.shippingInfo;
+
       shippingForm.setFieldsValue({
-        carrier: order.shippingInfo.carrier,
-        trackingNumber: order.shippingInfo.trackingNumber,
-        estimatedDelivery: order.shippingInfo.estimatedDelivery || NULL,
-        notes: order.shippingInfo.notes || NULL
+        carrier,
+        trackingNumber,
+        estimatedDelivery: estimatedDelivery ?? '',
+        notes: notes ?? ''
       });
     } else {
-      shippingForm.resetFields();
+      shippingForm.setFieldsValue({
+        carrier: '',
+        trackingNumber: '',
+        estimatedDelivery: '',
+        notes: ''
+      });
     }
   };
 

@@ -23,7 +23,7 @@ const ProductCard = ({ product, onAddToCart }) => {
 
   return (
     <Card
-      // hoverable
+      hoverable
       style={{ height: '100%' }}
       cover={
         <div style={{ 
