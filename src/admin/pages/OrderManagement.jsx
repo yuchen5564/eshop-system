@@ -112,8 +112,8 @@ const OrderManagement = () => {
       shippingForm.setFieldsValue({
         carrier: order.shippingInfo.carrier,
         trackingNumber: order.shippingInfo.trackingNumber,
-        estimatedDelivery: order.shippingInfo.estimatedDelivery,
-        notes: order.shippingInfo.notes
+        estimatedDelivery: order.shippingInfo.estimatedDelivery || NULL,
+        notes: order.shippingInfo.notes || NULL
       });
     } else {
       shippingForm.resetFields();
@@ -607,9 +607,7 @@ const OrderManagement = () => {
                       </a>
                     </Descriptions.Item>
                   )}
-                  {selectedOrder.shippingInfo.notes && (
-                    <Descriptions.Item label="出貨備註" span={2}>{selectedOrder.shippingInfo.notes}</Descriptions.Item>
-                  )}
+                  <Descriptions.Item label="出貨備註" span={2}>{selectedOrder.shippingInfo.notes}</Descriptions.Item>
                 </Descriptions>
                 <Divider />
               </>

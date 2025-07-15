@@ -130,7 +130,7 @@ const CheckoutPage = ({
       };
 
       // 儲存訂單到 Firestore
-      const saveResult = await orderService.add(orderData);
+      const saveResult = await orderService.addWithId(orderId, orderData);
       if (!saveResult.success) {
         throw new Error('訂單儲存失敗');
       }
