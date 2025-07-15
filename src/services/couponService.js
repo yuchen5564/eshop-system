@@ -251,6 +251,33 @@ class CouponService extends FirestoreService {
     }
   }
 
+  // 使用優惠券（增加使用次數）
+  async useCoupon(code, userId, orderId) {
+    try {
+      const couponResult = await this.getCouponByCode(code);
+      
+      if (!couponResult.success || couponResult.data.length === 0) {
+        return { success: false, error: '優惠券不存在' };
+      }
+      
+      const coupon = couponResult.data[0];
+      const newUsedCount = (coupon.usedCount || 0) + 1;
+      
+      // 更新使用次數
+      const updateResult = await this.update(coupon.id, {
+        usedCount: newUsedCount,
+        lastUsedAt: new Date().toISOString(),
+        lastUsedBy: userId,
+        lastOrderId: orderId
+      });
+      
+      return updateResult;
+    } catch (error) {
+      console.error('Use coupon error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
   // 獲取優惠券統計
   async getCouponStats() {
     try {
@@ -347,7 +374,9 @@ class CouponService extends FirestoreService {
     ];
 
     for (const coupon of mockCoupons) {
-      await this.add(coupon);
+      // 使用自訂ID創建優惠券
+      const { id, ...couponData } = coupon;
+      await this.addWithId(id, couponData);
     }
   }
 }

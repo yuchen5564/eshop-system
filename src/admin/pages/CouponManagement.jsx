@@ -125,15 +125,22 @@ const CouponManagement = () => {
         if (result.success) {
           message.success('優惠券更新成功');
         } else {
-          message.error('更新失敗');
+          message.error('更新失敗: ' + result.error);
           return;
         }
       } else {
-        const result = await couponService.add(couponData);
+        // 新增優惠券時使用優惠券代碼作為ID
+        const couponId = values.code.toUpperCase();
+        const { code, ...dataWithoutCode } = couponData;
+        const result = await couponService.addWithId(couponId, {
+          ...dataWithoutCode,
+          code: code.toUpperCase(),
+          usedCount: 0
+        });
         if (result.success) {
           message.success('優惠券建立成功');
         } else {
-          message.error('建立失敗');
+          message.error('建立失敗: ' + result.error);
           return;
         }
       }
@@ -156,10 +163,11 @@ const CouponManagement = () => {
         loadCoupons();
         loadStats();
       } else {
-        message.error('刪除失敗');
+        message.error('刪除失敗: ' + result.error);
       }
     } catch (error) {
-      message.error('刪除失敗');
+      console.error('Delete coupon error:', error);
+      message.error('刪除失敗: ' + error.message);
     }
   };
 
@@ -178,13 +186,18 @@ const CouponManagement = () => {
     setModalVisible(true);
   };
 
-  const handleToggleActive = (code, isActive) => {
+  const handleToggleActive = async (coupon, isActive) => {
     try {
-      couponService.updateCoupon(code, { isActive });
-      message.success(`優惠券已${isActive ? '啟用' : '停用'}`);
-      loadCoupons();
+      const result = await couponService.update(coupon.id, { isActive });
+      if (result.success) {
+        message.success(`優惠券已${isActive ? '啟用' : '停用'}`);
+        loadCoupons();
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
-      message.error('操作失敗');
+      console.error('Toggle coupon active status error:', error);
+      message.error('操作失敗: ' + error.message);
     }
   };
 
@@ -292,7 +305,7 @@ const CouponManagement = () => {
         <Switch
           checked={isActive}
           size="small"
-          onChange={(checked) => handleToggleActive(record.code, checked)}
+          onChange={(checked) => handleToggleActive(record, checked)}
         />
       )
     },

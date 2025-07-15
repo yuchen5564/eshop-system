@@ -137,7 +137,10 @@ const CheckoutPage = ({
 
       // 使用優惠券
       if (appliedCoupon) {
-        couponService.useCoupon(appliedCoupon.code, 'guest', orderId);
+        const useCouponResult = await couponService.useCoupon(appliedCoupon.code, 'guest', orderId);
+        if (!useCouponResult.success) {
+          console.warn('Failed to update coupon usage:', useCouponResult.error);
+        }
       }
 
       // 發送訂單確認郵件

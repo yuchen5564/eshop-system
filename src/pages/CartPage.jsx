@@ -50,7 +50,7 @@ const CartPage = ({
 
     setLoading(true);
     try {
-      const result = couponService.applyCoupon(
+      const result = await couponService.applyCoupon(
         couponCode.trim(),
         cart,
         getTotalPrice(),
