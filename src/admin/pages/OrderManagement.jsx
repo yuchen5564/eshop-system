@@ -28,13 +28,27 @@ import {
   CalendarOutlined,
   ReloadOutlined
 } from '@ant-design/icons';
-import { orderStatusOptions, paymentStatusOptions } from '../data/mockAdminData';
 import emailService from '../../services/emailService';
 import orderService from '../../services/orderService';
 import { logisticsService } from '../../services/logisticsService';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
+
+const orderStatusOptions = [
+  { value: 'pending', label: '待處理', color: 'orange' },
+  { value: 'processing', label: '處理中', color: 'blue' },
+  { value: 'shipped', label: '已出貨', color: 'cyan' },
+  { value: 'delivered', label: '已送達', color: 'green' },
+  { value: 'cancelled', label: '已取消', color: 'red' }
+];
+
+export const paymentStatusOptions = [
+  { value: 'pending', label: '待付款', color: 'orange' },
+  { value: 'paid', label: '已付款', color: 'green' },
+  { value: 'failed', label: '付款失敗', color: 'red' },
+  { value: 'refunded', label: '已退款', color: 'purple' }
+];
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
