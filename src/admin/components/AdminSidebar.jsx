@@ -6,6 +6,7 @@ import {
   CreditCardOutlined,
   SettingOutlined,
   UserOutlined,
+  TeamOutlined,
   BarChartOutlined,
   FileTextOutlined,
   MailOutlined,
@@ -55,6 +56,11 @@ const AdminSidebar = ({ selectedKey, onMenuSelect, collapsed }) => {
       key: 'logistics',
       icon: <TruckOutlined />,
       label: '物流設定'
+    },
+    {
+      key: 'users',
+      icon: <TeamOutlined />,
+      label: '用戶管理'
     },
     {
       key: 'analytics',

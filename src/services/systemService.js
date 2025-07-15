@@ -4,6 +4,7 @@ import couponService from './couponService';
 import paymentService from './paymentService';
 import { emailManagementService, emailTemplateService } from './emailManagementService';
 import { logisticsService } from './logisticsService';
+import userManagementService from './userManagementService';
 import { signUp } from './authService';
 import { mockProducts } from '../data/mockData';
 
@@ -77,6 +78,39 @@ class SystemService {
       if (!adminResult.success) {
         throw new Error(`創建管理員帳戶失敗: ${adminResult.error}`);
       }
+
+      // 同步將管理員信息寫入用戶管理數據庫
+      try {
+        const adminUserData = {
+          uid: adminResult.user.uid,
+          email: adminData.email,
+          displayName: adminData.displayName,
+          role: 'super_admin',
+          permissions: [
+            'user_management',
+            'product_management', 
+            'order_management',
+            'category_management',
+            'coupon_management',
+            'email_management',
+            'logistics_management',
+            'payment_management',
+            'system_settings'
+          ],
+          isActive: true,
+          emailVerified: false,
+          createdAt: new Date().toISOString(),
+          lastLoginAt: null,
+          createdBy: 'system'
+        };
+        
+        await userManagementService.saveAdminUserData(adminResult.user.uid, adminUserData);
+        console.log('管理員用戶數據已同步到用戶管理系統');
+      } catch (userSyncError) {
+        console.warn('同步管理員用戶數據失敗:', userSyncError);
+        // 不拋出錯誤，因為這不影響系統初始化的核心功能
+      }
+      
       updateProgress(1, 'completed', '管理員帳戶創建完成');
 
       // 2. 初始化分類
@@ -417,7 +451,7 @@ class SystemService {
   // 初始化物流設定
   async initializeLogisticsSettings() {
     try {
-      return await logisticsService.initializeDefaultLogisticsSettings();
+      return await logisticsService.initializeDefaultLogisticsMethods();
     } catch (error) {
       return {
         success: false,

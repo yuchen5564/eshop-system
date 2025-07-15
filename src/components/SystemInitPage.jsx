@@ -276,11 +276,26 @@ const SystemInitPage = ({ onInitComplete }) => {
 
   function SystemInitStep() {
     const [initStarted, setInitStarted] = useState(false);
+    const [currentInitStep, setCurrentInitStep] = useState(0);
+    const [initSteps, setInitSteps] = useState([]);
+
+    const initializationSteps = [
+      { title: '創建管理員帳戶', icon: '👤', status: 'pending' },
+      { title: '初始化商品分類', icon: '📂', status: 'pending' },
+      { title: '載入示例商品', icon: '🛍️', status: 'pending' },
+      { title: '設定優惠券', icon: '🎫', status: 'pending' },
+      { title: '配置付款方式', icon: '💳', status: 'pending' },
+      { title: '設定郵件系統', icon: '📧', status: 'pending' },
+      { title: '建立郵件模板', icon: '📝', status: 'pending' },
+      { title: '配置物流設定', icon: '🚚', status: 'pending' }
+    ];
 
     const startInitialization = async () => {
       setInitStarted(true);
       setLoading(true);
       setInitProgress(0);
+      setCurrentInitStep(0);
+      setInitSteps([...initializationSteps]);
       
       try {
         setInitStatus('準備開始初始化...');
@@ -289,6 +304,23 @@ const SystemInitPage = ({ onInitComplete }) => {
         const progressCallback = (progressInfo) => {
           setInitProgress(progressInfo.progress);
           setInitStatus(progressInfo.message);
+          setCurrentInitStep(progressInfo.step);
+          
+          // 更新步驟狀態
+          setInitSteps(prevSteps => 
+            prevSteps.map((step, index) => {
+              if (index < progressInfo.step - 1) {
+                return { ...step, status: 'completed' };
+              } else if (index === progressInfo.step - 1) {
+                return { 
+                  ...step, 
+                  status: progressInfo.status === 'error' ? 'error' : 
+                          progressInfo.status === 'completed' ? 'completed' : 'processing'
+                };
+              }
+              return step;
+            })
+          );
           
           // 如果有錯誤，顯示錯誤狀態
           if (progressInfo.status === 'error') {
@@ -303,6 +335,11 @@ const SystemInitPage = ({ onInitComplete }) => {
           setInitStatus('系統初始化完成！所有組件已成功配置');
           setInitResults(result.results);
           
+          // 標記所有步驟為完成
+          setInitSteps(prevSteps => 
+            prevSteps.map(step => ({ ...step, status: 'completed' }))
+          );
+          
           message.success('系統初始化完成！');
           
           // 延遲一下再進入下一步
@@ -316,6 +353,16 @@ const SystemInitPage = ({ onInitComplete }) => {
         setInitStatus(`初始化失敗: ${error.message}`);
         message.error('系統初始化失敗');
         console.error('System initialization error:', error);
+        
+        // 標記當前步驟為錯誤
+        setInitSteps(prevSteps => 
+          prevSteps.map((step, index) => {
+            if (index === currentInitStep - 1) {
+              return { ...step, status: 'error' };
+            }
+            return step;
+          })
+        );
       } finally {
         setLoading(false);
       }
@@ -373,14 +420,91 @@ const SystemInitPage = ({ onInitComplete }) => {
               )}
             </div>
             
-            <Progress 
-              percent={initProgress} 
-              status={loading ? 'active' : 'success'}
-              style={{ marginBottom: '24px' }}
-            />
+            {/* 總體進度條 */}
+            <div style={{ marginBottom: '32px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <Text strong>初始化進度</Text>
+                <Text>{initProgress}%</Text>
+              </div>
+              <Progress 
+                percent={initProgress} 
+                status={loading ? 'active' : 'success'}
+                strokeColor={{
+                  '0%': '#108ee9',
+                  '100%': '#87d068',
+                }}
+                style={{ marginBottom: '8px' }}
+              />
+              <div style={{ textAlign: 'center' }}>
+                <Text type="secondary">{initStatus}</Text>
+              </div>
+            </div>
             
-            <div style={{ textAlign: 'center' }}>
-              <Text>{initStatus}</Text>
+            {/* 詳細步驟列表 */}
+            <div style={{ 
+              background: '#fafafa', 
+              border: '1px solid #d9d9d9', 
+              borderRadius: '6px', 
+              padding: '16px',
+              maxHeight: '300px',
+              overflowY: 'auto'
+            }}>
+              <Title level={5} style={{ margin: '0 0 16px 0', textAlign: 'center' }}>
+                初始化步驟
+              </Title>
+              {initSteps.map((step, index) => (
+                <div 
+                  key={index}
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    padding: '8px 12px',
+                    margin: '4px 0',
+                    borderRadius: '4px',
+                    backgroundColor: step.status === 'processing' ? '#e6f7ff' : 
+                                   step.status === 'completed' ? '#f6ffed' :
+                                   step.status === 'error' ? '#fff2f0' : '#fff',
+                    border: step.status === 'processing' ? '1px solid #91d5ff' :
+                           step.status === 'completed' ? '1px solid #b7eb8f' :
+                           step.status === 'error' ? '1px solid #ffccc7' : '1px solid #f0f0f0'
+                  }}
+                >
+                  <div style={{ fontSize: '20px', marginRight: '12px' }}>
+                    {step.icon}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <Text 
+                      style={{ 
+                        fontWeight: step.status === 'processing' ? 'bold' : 'normal',
+                        color: step.status === 'error' ? '#ff4d4f' : 
+                               step.status === 'completed' ? '#52c41a' :
+                               step.status === 'processing' ? '#1890ff' : '#666'
+                      }}
+                    >
+                      {step.title}
+                    </Text>
+                  </div>
+                  <div>
+                    {step.status === 'completed' && (
+                      <CheckCircleOutlined style={{ color: '#52c41a', fontSize: '16px' }} />
+                    )}
+                    {step.status === 'processing' && (
+                      <LoadingOutlined style={{ color: '#1890ff', fontSize: '16px' }} />
+                    )}
+                    {step.status === 'error' && (
+                      <ExclamationCircleOutlined style={{ color: '#ff4d4f', fontSize: '16px' }} />
+                    )}
+                    {step.status === 'pending' && (
+                      <div style={{ 
+                        width: '16px', 
+                        height: '16px', 
+                        borderRadius: '50%', 
+                        backgroundColor: '#d9d9d9' 
+                      }} />
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

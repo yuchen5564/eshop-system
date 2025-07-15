@@ -10,6 +10,7 @@ import PaymentManagement from './pages/PaymentManagement';
 import EmailManagement from './pages/EmailManagement';
 import CouponManagement from './pages/CouponManagement';
 import LogisticsManagement from './pages/LogisticsManagement';
+import UserManagement from './pages/UserManagement';
 import SystemSettings from './pages/SystemSettings';
 
 const { Content, Sider } = Layout;
@@ -44,6 +45,8 @@ const AdminApp = ({ onBackToSite }) => {
         return <CouponManagement />;
       case 'logistics':
         return <LogisticsManagement />;
+      case 'users':
+        return <UserManagement />;
       case 'analytics':
         return (
           <div style={{ padding: '24px', textAlign: 'center', height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
