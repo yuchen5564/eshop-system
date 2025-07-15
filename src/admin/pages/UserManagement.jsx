@@ -44,6 +44,12 @@ const UserManagement = () => {
   const [userModalVisible, setUserModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [form] = Form.useForm();
+  
+  // 密碼重置相關狀態
+  const [resetPasswordModalVisible, setResetPasswordModalVisible] = useState(false);
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+  const [resetPasswordUser, setResetPasswordUser] = useState(null);
+  const [resetPasswordResult, setResetPasswordResult] = useState(null);
 
   useEffect(() => {
     loadUsers();
@@ -142,25 +148,47 @@ const UserManagement = () => {
     }
   };
 
-  const handleResetPassword = async (user) => {
-    Modal.confirm({
-      title: '重置密碼',
-      content: `確定要為用戶 "${user.displayName || user.email}" 重置密碼嗎？重置郵件將發送到 ${user.email}`,
-      okText: '確定',
-      cancelText: '取消',
-      onOk: async () => {
-        try {
-          const result = await userManagementService.resetUserPassword(user.email);
-          if (result.success) {
-            message.success('密碼重置郵件已發送');
-          } else {
-            message.error('密碼重置失敗: ' + result.error);
-          }
-        } catch (error) {
-          message.error('密碼重置失敗：' + error.message);
-        }
-      }
-    });
+  const handleResetPassword = (user) => {
+    console.log('Resetting password for user:', user);
+    setResetPasswordUser(user);
+    setResetPasswordResult(null);
+    setResetPasswordModalVisible(true);
+  };
+
+  const handleResetPasswordConfirm = async () => {
+    if (!resetPasswordUser) return;
+    
+    setResetPasswordLoading(true);
+    try {
+      console.log('Calling resetUserPassword for:', resetPasswordUser.email);
+      const result = await userManagementService.resetUserPassword(resetPasswordUser.email);
+      console.log('Reset password result:', result);
+      
+      setResetPasswordResult(result);
+      // 不關閉 Modal，而是顯示結果
+    } catch (error) {
+      console.error('Reset password error:', error);
+      setResetPasswordResult({
+        success: false,
+        error: error.message
+      });
+    } finally {
+      setResetPasswordLoading(false);
+    }
+  };
+
+  const handleResetPasswordCancel = () => {
+    setResetPasswordModalVisible(false);
+    setResetPasswordUser(null);
+    setResetPasswordResult(null);
+    setResetPasswordLoading(false);
+  };
+
+  const handleResetPasswordClose = () => {
+    setResetPasswordModalVisible(false);
+    setResetPasswordUser(null);
+    setResetPasswordResult(null);
+    setResetPasswordLoading(false);
   };
 
   const availablePermissions = [
@@ -465,10 +493,102 @@ const UserManagement = () => {
             <ExclamationCircleOutlined style={{ marginRight: '8px' }} />
             {editingUser ? 
               '更新用戶信息後，用戶需要重新登入。如需重置密碼，請使用「重置密碼」功能。' :
-              '新用戶創建後將收到驗證郵件，需要驗證郵箱後才能正常使用。'
+              '新用戶創建後可以直接使用，無需郵箱驗證。如需重置密碼，可使用「重置密碼」功能發送重置郵件。'
             }
           </div>
         </Form>
+      </Modal>
+
+      {/* 密碼重置 Modal */}
+      <Modal
+        title="重置用戶密碼"
+        open={resetPasswordModalVisible}
+        onOk={resetPasswordResult ? handleResetPasswordClose : handleResetPasswordConfirm}
+        onCancel={handleResetPasswordCancel}
+        confirmLoading={resetPasswordLoading}
+        okText={resetPasswordResult ? '我知道了' : '確定發送'}
+        cancelText="取消"
+        centered
+        closable={!resetPasswordLoading}
+        maskClosable={!resetPasswordLoading}
+      >
+        {!resetPasswordResult ? (
+          // 確認發送階段
+          <div>
+            <p>確定要為用戶重置密碼嗎？</p>
+            <div style={{ 
+              background: '#f6f6f6', 
+              padding: '12px', 
+              borderRadius: '6px', 
+              marginTop: '12px' 
+            }}>
+              <div><strong>用戶：</strong>{resetPasswordUser?.displayName || '未設定姓名'}</div>
+              <div><strong>郵箱：</strong>{resetPasswordUser?.email}</div>
+            </div>
+            <p style={{ marginTop: '12px', color: '#666', fontSize: '14px' }}>
+              重置密碼郵件將發送到上述郵箱地址。
+            </p>
+          </div>
+        ) : (
+          // 結果顯示階段
+          <div>
+            {resetPasswordResult.success ? (
+              <div>
+                <div style={{ 
+                  textAlign: 'center', 
+                  marginBottom: '16px',
+                  color: '#52c41a',
+                  fontSize: '16px'
+                }}>
+                  <CheckCircleOutlined style={{ fontSize: '24px', marginRight: '8px' }} />
+                  重置密碼郵件發送成功
+                </div>
+                <div style={{ 
+                  background: '#f6ffed', 
+                  border: '1px solid #b7eb8f',
+                  padding: '16px', 
+                  borderRadius: '6px',
+                  marginBottom: '16px'
+                }}>
+                  <div><strong>發送到：</strong>{resetPasswordUser?.email}</div>
+                  <div style={{ marginTop: '8px', fontSize: '14px', color: '#666' }}>
+                    請提醒用戶檢查郵箱（包含垃圾郵件夾），並按照郵件中的指示重置密碼。
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div style={{ 
+                  textAlign: 'center', 
+                  marginBottom: '16px',
+                  color: '#ff4d4f',
+                  fontSize: '16px'
+                }}>
+                  <CloseCircleOutlined style={{ fontSize: '24px', marginRight: '8px' }} />
+                  重置密碼郵件發送失敗
+                </div>
+                <div style={{ 
+                  background: '#fff2f0', 
+                  border: '1px solid #ffccc7',
+                  padding: '16px', 
+                  borderRadius: '6px',
+                  marginBottom: '16px'
+                }}>
+                  <div><strong>目標郵箱：</strong>{resetPasswordUser?.email}</div>
+                  <div style={{ marginTop: '8px' }}>
+                    <strong>錯誤原因：</strong>
+                    <div style={{ color: '#ff4d4f', marginTop: '4px' }}>
+                      {resetPasswordResult.error}
+                    </div>
+                  </div>
+                  <div style={{ marginTop: '8px', fontSize: '14px', color: '#666' }}>
+                    請檢查郵箱地址是否正確，或稍後再試。
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </Modal>
     </div>
   );

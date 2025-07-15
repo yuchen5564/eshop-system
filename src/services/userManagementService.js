@@ -76,12 +76,8 @@ class UserManagementService {
         });
       }
 
-      // 發送驗證郵件
-      try {
-        await sendEmailVerification(user);
-      } catch (emailError) {
-        console.warn('發送驗證郵件失敗:', emailError);
-      }
+      // 不再自動發送驗證郵件，新用戶可直接使用
+      // await sendEmailVerification(user);
 
       // 在 Firestore 中保存用戶信息
       const userDoc = {
@@ -91,7 +87,7 @@ class UserManagementService {
         role: role,
         permissions: permissions,
         isActive: true,
-        emailVerified: false,
+        emailVerified: true, // 新用戶預設為已驗證
         createdAt: new Date().toISOString(),
         lastLoginAt: null,
         createdBy: auth.currentUser?.uid || 'system'
