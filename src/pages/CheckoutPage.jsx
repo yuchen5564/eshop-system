@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Row,
   Col,
@@ -30,6 +30,7 @@ import {
 import emailService from '../services/emailService';
 import couponService from '../services/couponService';
 import orderService from '../services/orderService';
+import paymentService from '../services/paymentService';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -46,16 +47,42 @@ const CheckoutPage = ({
   const [orderData, setOrderData] = useState({});
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState([]);
 
   const shippingFee = 100;
   const subtotal = getTotalPrice();
   const totalAmount = subtotal + shippingFee - discountAmount;
 
-  const paymentMethods = [
-    { value: 'credit_card', label: '信用卡付款', icon: '💳' },
-    { value: 'bank_transfer', label: '銀行轉帳', icon: '🏦' },
-    { value: 'cash_on_delivery', label: '貨到付款', icon: '💰' }
-  ];
+  // 載入啟用的付款方式
+  useEffect(() => {
+    const loadPaymentMethods = async () => {
+      try {
+        const result = await paymentService.getActivePaymentMethods();
+        if (result.success) {
+          // 轉換格式為結帳頁面所需格式
+          const formattedMethods = result.data.map(method => ({
+            value: method.id,
+            label: method.name,
+            icon: method.icon,
+            type: method.type,
+            description: method.description,
+            settings: method.settings
+          }));
+          setPaymentMethods(formattedMethods);
+        }
+      } catch (error) {
+        console.error('載入付款方式失敗:', error);
+        // 如果載入失敗，使用預設方式
+        setPaymentMethods([
+          { value: 'credit_card', label: '信用卡付款', icon: '💳' },
+          { value: 'bank_transfer', label: '銀行轉帳', icon: '🏦' },
+          { value: 'cash_on_delivery', label: '貨到付款', icon: '💰' }
+        ]);
+      }
+    };
+
+    loadPaymentMethods();
+  }, []);
 
   const cities = [
     '台北市', '新北市', '桃園市', '台中市', '台南市', '高雄市',
@@ -143,32 +170,42 @@ const CheckoutPage = ({
         }
       }
 
-      // 發送訂單確認郵件
-      const emailResult = await emailService.sendOrderConfirmationEmail(orderData);
-      
-      // 更新郵件發送狀態
-      if (emailResult.success) {
-        await orderService.update(saveResult.id, {
-          emailNotifications: {
-            orderConfirmation: {
-              sent: true,
-              sentAt: new Date().toISOString(),
-              status: 'delivered'
-            }
-          }
-        });
-      } else {
-        await orderService.update(saveResult.id, {
-          emailNotifications: {
-            orderConfirmation: {
-              sent: false,
-              sentAt: new Date().toISOString(),
-              status: 'failed'
-            }
-          }
-        });
+      // 發送訂單確認郵件（不影響訂單成功與否）
+      let emailResult = { success: false };
+      try {
+        emailResult = await emailService.sendOrderConfirmationEmail(orderData);
+      } catch (emailError) {
+        console.warn('Email service error:', emailError);
       }
       
+      // 更新郵件發送狀態（不影響訂單成功與否）
+      try {
+        if (emailResult.success) {
+          await orderService.update(saveResult.id, {
+            emailNotifications: {
+              orderConfirmation: {
+                sent: true,
+                sentAt: new Date().toISOString(),
+                status: 'delivered'
+              }
+            }
+          });
+        } else {
+          await orderService.update(saveResult.id, {
+            emailNotifications: {
+              orderConfirmation: {
+                sent: false,
+                sentAt: new Date().toISOString(),
+                status: 'failed'
+              }
+            }
+          });
+        }
+      } catch (updateError) {
+        console.warn('Failed to update email status:', updateError);
+      }
+      
+      // 無論郵件是否成功，都顯示訂單成功頁面
       Modal.success({
         title: '訂單提交成功！',
         content: (
@@ -290,14 +327,19 @@ const CheckoutPage = ({
                           <span style={{ fontSize: '20px' }}>{method.icon}</span>
                           <Text strong>{method.label}</Text>
                         </Space>
-                        {method.value === 'bank_transfer' && (
+                        {method.description && (
                           <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
-                            請於訂單成立後3天內完成轉帳
+                            {method.description}
                           </div>
                         )}
-                        {method.value === 'cash_on_delivery' && (
+                        {method.settings && (
                           <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
-                            收貨時以現金付款（限特定地區）
+                            {method.settings.processingTime && (
+                              <span>處理時間: {method.settings.processingTime}</span>
+                            )}
+                            {method.settings.extraFee && (
+                              <span> • 手續費: NT$ {method.settings.extraFee}</span>
+                            )}
                           </div>
                         )}
                       </Card>

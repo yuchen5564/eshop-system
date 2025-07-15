@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layout, Button, Dropdown, Avatar, Space, Typography } from 'antd';
+import { Layout, Button, Dropdown, Avatar, Space, Typography, Modal, message } from 'antd';
 import {
   MenuUnfoldOutlined,
   MenuFoldOutlined,
@@ -8,11 +8,58 @@ import {
   SettingOutlined,
   BellOutlined
 } from '@ant-design/icons';
+import { useAuth } from '../../contexts/AuthContext';
+import { signOutUser } from '../../services/authService';
 
 const { Header } = Layout;
 const { Text } = Typography;
 
 const AdminHeader = ({ collapsed, onToggleCollapse, onBackToSite, style }) => {
+  const { user } = useAuth();
+
+  const handleLogout = () => {
+    Modal.confirm({
+      title: '確認登出',
+      content: '您確定要登出管理後台嗎？',
+      okText: '確定',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          const result = await signOutUser();
+          if (result.success) {
+            console.log('Logout successful');
+            message.success('登出成功');
+            // 登出後會自動觸發AuthContext的狀態更新，回到登入頁面
+          } else {
+            console.log('Logout failed:', result.error);
+            message.error('登出失敗');
+          }
+        } catch (error) {
+          console.log('Logout error:', error);
+          message.error('登出失敗');
+        }
+      }
+    });
+  };
+
+  const handleMenuClick = ({ key }) => {
+    switch (key) {
+      case 'logout':
+        handleLogout();
+        break;
+      case 'profile':
+        // 實作個人資料功能
+        message.info('個人資料功能開發中...');
+        break;
+      case 'settings':
+        // 實作設定功能
+        message.info('設定功能開發中...');
+        break;
+      default:
+        break;
+    }
+  };
+
   const userMenuItems = [
     {
       key: 'profile',
@@ -74,7 +121,7 @@ const AdminHeader = ({ collapsed, onToggleCollapse, onBackToSite, style }) => {
         />
         
         <Dropdown
-          menu={{ items: userMenuItems }}
+          menu={{ items: userMenuItems, onClick: handleMenuClick }}
           placement="bottomRight"
           arrow
         >
@@ -88,7 +135,7 @@ const AdminHeader = ({ collapsed, onToggleCollapse, onBackToSite, style }) => {
             transition: 'background-color 0.2s'
           }}>
             <Avatar size="small" icon={<UserOutlined />} />
-            <Text>管理員</Text>
+            <Text>{user?.displayName || user?.email || '管理員'}</Text>
           </div>
         </Dropdown>
       </div>

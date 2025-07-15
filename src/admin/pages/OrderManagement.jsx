@@ -27,9 +27,10 @@ import {
   DownloadOutlined,
   CalendarOutlined
 } from '@ant-design/icons';
-import { orderStatusOptions, paymentStatusOptions, shippingCarriers } from '../data/mockAdminData';
+import { orderStatusOptions, paymentStatusOptions } from '../data/mockAdminData';
 import emailService from '../../services/emailService';
 import orderService from '../../services/orderService';
+import { logisticsService } from '../../services/logisticsService';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -46,11 +47,76 @@ const OrderManagement = () => {
   const [paymentFilter, setPaymentFilter] = useState('all');
   const [dateRange, setDateRange] = useState([]);
   const [emailSending, setEmailSending] = useState(false);
+  const [shippingCarriers, setShippingCarriers] = useState([]);
 
-  // 載入訂單數據
+  // 載入訂單數據和物流選項
   useEffect(() => {
     loadOrders();
+    loadShippingCarriers();
   }, []);
+
+  const loadShippingCarriers = async () => {
+    try {
+      const result = await logisticsService.getShippingCarriers();
+      if (result.success) {
+        // console.log('Loaded shipping carriers:', result.data);
+        // console.log('Number of carriers loaded:', result.data.length);
+        
+        // 如果沒有物流選項，嘗試初始化物流方法
+        if (result.data.length === 0) {
+          // console.log('No carriers found, trying to initialize logistics methods');
+          const initResult = await logisticsService.initializeDefaultLogisticsMethods();
+          if (initResult.success) {
+            // 重新載入物流選項
+            const retryResult = await logisticsService.getShippingCarriers();
+            if (retryResult.success && retryResult.data.length > 0) {
+              setShippingCarriers(retryResult.data);
+              message.success('物流方法已初始化');
+              return;
+            }
+          }
+
+          // 如果初始化失敗，使用預設選項
+          const defaultCarriers = [
+            { value: 'post_office', label: '中華郵政', trackingUrlTemplate: 'https://trackings.post.gov.tw/?id={trackingNumber}' },
+            { value: 'fedex', label: 'FedEx', trackingUrlTemplate: 'https://www.fedex.com/fedextrack/?tracknumbers={trackingNumber}' },
+            { value: 'black_cat', label: '黑貓宅急便', trackingUrlTemplate: 'https://www.t-cat.com.tw/inquire/trace.aspx?no={trackingNumber}' },
+            { value: 'hct', label: '新竹物流', trackingUrlTemplate: 'https://www.hct.com.tw/business/service/query_cargo?no={trackingNumber}' }
+          ];
+          setShippingCarriers(defaultCarriers);
+          console.log('No shipping carriers found, using default options');
+          message.warning('使用預設物流選項');
+        } else {
+          console.log('Shipping carriers loaded:', result.data);
+          setShippingCarriers(result.data);
+          console.log(shippingCarriers)
+
+        }
+      } else {
+        // console.error('Failed to load shipping carriers:', result.error);
+        // 使用預設選項作為後備
+        const defaultCarriers = [
+          { value: 'post_office', label: '中華郵政', trackingUrlTemplate: 'https://trackings.post.gov.tw/?id={trackingNumber}' },
+          { value: 'fedex', label: 'FedEx', trackingUrlTemplate: 'https://www.fedex.com/fedextrack/?tracknumbers={trackingNumber}' },
+          { value: 'black_cat', label: '黑貓宅急便', trackingUrlTemplate: 'https://www.t-cat.com.tw/inquire/trace.aspx?no={trackingNumber}' },
+          { value: 'hct', label: '新竹物流', trackingUrlTemplate: 'https://www.hct.com.tw/business/service/query_cargo?no={trackingNumber}' }
+        ];
+        setShippingCarriers(defaultCarriers);
+        message.warning('載入物流選項失敗，使用預設選項');
+      }
+    } catch (error) {
+      // console.error('載入物流選項失敗:', error);
+      // 使用預設選項作為後備
+      const defaultCarriers = [
+        { value: 'post_office', label: '中華郵政', trackingUrlTemplate: 'https://trackings.post.gov.tw/?id={trackingNumber}' },
+        { value: 'fedex', label: 'FedEx', trackingUrlTemplate: 'https://www.fedex.com/fedextrack/?tracknumbers={trackingNumber}' },
+        { value: 'black_cat', label: '黑貓宅急便', trackingUrlTemplate: 'https://www.t-cat.com.tw/inquire/trace.aspx?no={trackingNumber}' },
+        { value: 'hct', label: '新竹物流', trackingUrlTemplate: 'https://www.hct.com.tw/business/service/query_cargo?no={trackingNumber}' }
+      ];
+      setShippingCarriers(defaultCarriers);
+      message.warning('載入物流選項失敗，使用預設選項');
+    }
+  };
 
   const loadOrders = async () => {
     setLoading(true);
@@ -118,14 +184,14 @@ const OrderManagement = () => {
       } = order.shippingInfo;
 
       shippingForm.setFieldsValue({
-        carrier,
+        carrier: carrier || undefined,
         trackingNumber,
         estimatedDelivery: estimatedDelivery ?? '',
         notes: notes ?? ''
       });
     } else {
       shippingForm.setFieldsValue({
-        carrier: '',
+        carrier: undefined,
         trackingNumber: '',
         estimatedDelivery: '',
         notes: ''
@@ -139,7 +205,7 @@ const OrderManagement = () => {
       const shippingInfo = {
         ...values,
         shippedDate: new Date().toISOString(),
-        trackingUrl: shippingCarriers.find(c => c.value === values.carrier)?.trackingUrlTemplate?.replace('{}', values.trackingNumber)
+        trackingUrl: shippingCarriers.find(c => c.value === values.carrier)?.trackingUrlTemplate?.replace('{trackingNumber}', values.trackingNumber)
       };
 
       const updatedOrder = {
@@ -200,7 +266,7 @@ const OrderManagement = () => {
       const shippingInfo = {
         ...values,
         shippedDate: new Date().toISOString(),
-        trackingUrl: shippingCarriers.find(c => c.value === values.carrier)?.trackingUrlTemplate?.replace('{}', values.trackingNumber)
+        trackingUrl: shippingCarriers.find(c => c.value === values.carrier)?.trackingUrlTemplate?.replace('{trackingNumber}', values.trackingNumber)
       };
       
       const updatedOrder = {
@@ -255,24 +321,33 @@ const OrderManagement = () => {
       '付款方式',
       '出貨狀態',
       '貨運公司',
-      '追蹤編號'
+      '追蹤編號',
+      '訂購商品詳情'
     ];
     
-    const rows = orders.map(order => [
-      order.id,
-      order.customerName,
-      order.customerPhone,
-      order.customerEmail,
-      order.total,
-      orderStatusOptions.find(opt => opt.value === order.status)?.label || order.status,
-      paymentStatusOptions.find(opt => opt.value === order.paymentStatus)?.label || order.paymentStatus,
-      new Date(order.orderDate).toLocaleString('zh-TW'),
-      order.shippingAddress,
-      order.paymentMethod,
-      order.shippingInfo ? '已出貨' : '未出貨',
-      order.shippingInfo?.carrier || '',
-      order.shippingInfo?.trackingNumber || ''
-    ]);
+    const rows = orders.map(order => {
+      // 將商品資訊格式化為文字
+      const itemsDetail = order.items.map(item => 
+        `${item.name} x${item.quantity} = NT$${item.price * item.quantity}`
+      ).join('; ');
+      
+      return [
+        order.id,
+        order.customerName,
+        order.customerPhone,
+        order.customerEmail,
+        order.total,
+        orderStatusOptions.find(opt => opt.value === order.status)?.label || order.status,
+        paymentStatusOptions.find(opt => opt.value === order.paymentStatus)?.label || order.paymentStatus,
+        new Date(order.orderDate).toLocaleString('zh-TW'),
+        order.shippingAddress,
+        order.paymentMethod,
+        order.shippingInfo ? '已出貨' : '未出貨',
+        order.shippingInfo?.carrier || '',
+        order.shippingInfo?.trackingNumber || '',
+        itemsDetail
+      ];
+    });
     
     return [headers, ...rows].map(row => 
       row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
@@ -418,10 +493,14 @@ const OrderManagement = () => {
       width: 120,
       render: (_, record) => {
         if (record.shippingInfo) {
+          // 根據carrier代碼找到對應的物流公司名稱
+          const carrierInfo = shippingCarriers.find(c => c.value === record.shippingInfo.carrier);
+          const carrierName = carrierInfo ? carrierInfo.label : record.shippingInfo.carrier;
+          
           return (
             <div>
               <div style={{ fontSize: '12px', color: '#52c41a' }}>
-                {record.shippingInfo.carrier}
+                {carrierName}
               </div>
               <div style={{ fontSize: '10px', color: '#666' }}>
                 {record.shippingInfo.trackingNumber}
@@ -465,13 +544,20 @@ const OrderManagement = () => {
     <div style={{ padding: '24px' }}>
       <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Title level={3} style={{ margin: 0 }}>訂單管理</Title>
-        <Button 
-          type="primary" 
-          icon={<DownloadOutlined />} 
-          onClick={handleExportReport}
-        >
-          匯出報表
-        </Button>
+        <Space>
+          {/* <Button 
+            onClick={loadShippingCarriers}
+          >
+            重新載入物流選項
+          </Button> */}
+          <Button 
+            type="primary" 
+            icon={<DownloadOutlined />} 
+            onClick={handleExportReport}
+          >
+            匯出報表
+          </Button>
+        </Space>
       </div>
       
       <Card>

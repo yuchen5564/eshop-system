@@ -1,6 +1,8 @@
 import categoryService from './categoryService';
 import couponService from './couponService';
 import productService from './productService';
+import { logisticsService } from './logisticsService';
+import paymentService from './paymentService';
 import { mockProducts } from '../data/mockData';
 
 class InitializationService {
@@ -21,6 +23,12 @@ class InitializationService {
       
       // 初始化優惠券
       await this.initializeCoupons();
+      
+      // 初始化物流方法
+      await this.initializeLogisticsMethods();
+      
+      // 初始化付款方式
+      await this.initializePaymentMethods();
       
       // 初始化商品
       await this.initializeProducts();
@@ -43,6 +51,18 @@ class InitializationService {
   async initializeCoupons() {
     await couponService.initializeMockCoupons();
     console.log('優惠券初始化完成');
+  }
+
+  // 初始化物流方法
+  async initializeLogisticsMethods() {
+    await logisticsService.initializeDefaultLogisticsMethods();
+    console.log('物流方法初始化完成');
+  }
+
+  // 初始化付款方式
+  async initializePaymentMethods() {
+    await paymentService.initializeDefaultPaymentMethods();
+    console.log('付款方式初始化完成');
   }
 
   // 初始化商品
@@ -79,6 +99,22 @@ class InitializationService {
       if (coupons.success) {
         for (const coupon of coupons.data) {
           await couponService.delete(coupon.id);
+        }
+      }
+      
+      // 刪除所有物流方法
+      const logisticsMethods = await logisticsService.getLogisticsMethods();
+      if (logisticsMethods.success) {
+        for (const method of logisticsMethods.data) {
+          await logisticsService.deleteLogisticsMethod(method.id);
+        }
+      }
+      
+      // 刪除所有付款方式
+      const paymentMethods = await paymentService.getAll();
+      if (paymentMethods.success) {
+        for (const method of paymentMethods.data) {
+          await paymentService.delete(method.id);
         }
       }
       
