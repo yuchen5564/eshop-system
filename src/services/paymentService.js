@@ -149,7 +149,9 @@ class PaymentService extends FirestoreService {
 
     let successCount = 0;
     for (const method of defaultMethods) {
-      const result = await this.add(method);
+      // 使用自訂ID創建付款方式
+      const { id, ...methodData } = method;
+      const result = await this.addWithId(id, methodData);
       if (result.success) {
         successCount++;
       }

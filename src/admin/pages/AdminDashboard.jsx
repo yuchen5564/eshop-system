@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Statistic, Progress, Typography, Space, Table } from 'antd';
 import {
   ShoppingOutlined,
@@ -8,12 +8,58 @@ import {
   ArrowUpOutlined,
   ArrowDownOutlined
 } from '@ant-design/icons';
-import { dashboardStats, mockOrders } from '../data/mockAdminData';
+import orderService from '../../services/orderService';
 
 const { Title, Text } = Typography;
 
 const AdminDashboard = () => {
-  const recentOrders = mockOrders.slice(0, 5);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [stats, setStats] = useState({
+    totalOrders: 0,
+    totalRevenue: 0,
+    pendingOrders: 0,
+    lowStockProducts: 0,
+    monthlyOrdersGrowth: 0,
+    monthlyRevenueGrowth: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    setLoading(true);
+    try {
+      // 載入所有訂單
+      const ordersResult = await orderService.getAll();
+      if (ordersResult.success) {
+        const orders = ordersResult.data;
+        
+        // 設定最近5筆訂單
+        const sortedOrders = orders.sort((a, b) => new Date(b.createdAt?.seconds * 1000) - new Date(a.createdAt?.seconds * 1000));
+        setRecentOrders(sortedOrders.slice(0, 5));
+        
+        // 計算統計數據
+        const totalOrders = orders.length;
+        const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+        const pendingOrders = orders.filter(order => order.status === 'pending').length;
+        
+        setStats({
+          totalOrders,
+          totalRevenue,
+          pendingOrders,
+          lowStockProducts: 0, // TODO: 實現低庫存商品統計
+          monthlyOrdersGrowth: 0, // TODO: 實現月度增長統計
+          monthlyRevenueGrowth: 0 // TODO: 實現月度增長統計
+        });
+      }
+    } catch (error) {
+      console.error('載入儀表板數據失敗:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const orderColumns = [
     {
@@ -72,11 +118,11 @@ const AdminDashboard = () => {
           <Card>
             <Statistic
               title="總訂單數"
-              value={dashboardStats.totalOrders}
+              value={stats.totalOrders}
               prefix={<ShoppingOutlined />}
               suffix={
                 <div style={{ fontSize: '12px', color: '#52c41a' }}>
-                  <ArrowUpOutlined /> {dashboardStats.monthlyOrdersGrowth}%
+                  <ArrowUpOutlined /> {stats.monthlyOrdersGrowth}%
                 </div>
               }
             />
@@ -87,12 +133,12 @@ const AdminDashboard = () => {
           <Card>
             <Statistic
               title="總營收"
-              value={dashboardStats.totalRevenue}
+              value={stats.totalRevenue}
               prefix={<DollarOutlined />}
               precision={0}
               suffix={
                 <div style={{ fontSize: '12px', color: '#52c41a' }}>
-                  <ArrowUpOutlined /> {dashboardStats.monthlyRevenueGrowth}%
+                  <ArrowUpOutlined /> {stats.monthlyRevenueGrowth}%
                 </div>
               }
             />
@@ -103,7 +149,7 @@ const AdminDashboard = () => {
           <Card>
             <Statistic
               title="待處理訂單"
-              value={dashboardStats.pendingOrders}
+              value={stats.pendingOrders}
               prefix={<ClockCircleOutlined />}
               valueStyle={{ color: '#faad14' }}
             />
@@ -114,7 +160,7 @@ const AdminDashboard = () => {
           <Card>
             <Statistic
               title="低庫存商品"
-              value={dashboardStats.lowStockProducts}
+              value={stats.lowStockProducts}
               prefix={<ExclamationCircleOutlined />}
               valueStyle={{ color: '#ff4d4f' }}
             />
@@ -132,6 +178,7 @@ const AdminDashboard = () => {
               rowKey="id"
               pagination={false}
               size="small"
+              loading={loading}
             />
           </Card>
         </Col>

@@ -283,26 +283,39 @@ const SystemInitPage = ({ onInitComplete }) => {
       setInitProgress(0);
       
       try {
-        setInitStatus('正在初始化系統...');
-        setInitProgress(10);
+        setInitStatus('準備開始初始化...');
         
-        const result = await systemService.initializeSystem(adminData);
+        // 使用進度回調來即時更新進度
+        const progressCallback = (progressInfo) => {
+          setInitProgress(progressInfo.progress);
+          setInitStatus(progressInfo.message);
+          
+          // 如果有錯誤，顯示錯誤狀態
+          if (progressInfo.status === 'error') {
+            message.error(progressInfo.message);
+          }
+        };
+        
+        const result = await systemService.initializeSystem(adminData, progressCallback);
         
         if (result.success) {
           setInitProgress(100);
-          setInitStatus('系統初始化完成！');
+          setInitStatus('系統初始化完成！所有組件已成功配置');
           setInitResults(result.results);
+          
+          message.success('系統初始化完成！');
           
           // 延遲一下再進入下一步
           setTimeout(() => {
             setCurrentStep(3);
-          }, 1000);
+          }, 2000);
         } else {
           throw new Error(result.error);
         }
       } catch (error) {
         setInitStatus(`初始化失敗: ${error.message}`);
         message.error('系統初始化失敗');
+        console.error('System initialization error:', error);
       } finally {
         setLoading(false);
       }

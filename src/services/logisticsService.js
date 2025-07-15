@@ -241,7 +241,9 @@ class LogisticsService extends FirestoreService {
       isActive: true
     };
 
-    const result = await this.add(defaultSettings);
+    // 使用自訂ID創建物流設定
+    const { id, ...settingsData } = defaultSettings;
+    const result = await this.addWithId(id, settingsData);
     return {
       success: result.success,
       message: result.success ? '物流設定初始化成功' : '物流設定初始化失敗',

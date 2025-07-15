@@ -99,19 +99,34 @@ const CheckoutPage = ({
         subtotal: subtotal,
         discountAmount: discountAmount,
         appliedCoupon: appliedCoupon,
+        couponInfo: appliedCoupon ? {
+          code: appliedCoupon.code,
+          name: appliedCoupon.name,
+          type: appliedCoupon.type,
+          description: appliedCoupon.description
+        } : null,
         total: totalAmount,
         items: cart.map(item => ({
           id: item.id,
           name: item.name,
           quantity: item.quantity,
           price: item.price,
-          image: item.image
+          image: item.image,
+          farm: item.farm || '',
+          location: item.location || ''
         })),
         shippingAddress: `${data.city} ${data.address}`,
         paymentMethod: data.paymentMethod,
         paymentStatus: data.paymentMethod === 'credit_card' ? 'paid' : 'pending',
         notes: data.notes || '',
-        shippingInfo: null
+        shippingInfo: null,
+        emailNotifications: {
+          orderConfirmation: { 
+            sent: false, 
+            sentAt: null, 
+            status: 'pending' 
+          }
+        }
       };
 
       // 儲存訂單到 Firestore
@@ -127,6 +142,29 @@ const CheckoutPage = ({
 
       // 發送訂單確認郵件
       const emailResult = await emailService.sendOrderConfirmationEmail(orderData);
+      
+      // 更新郵件發送狀態
+      if (emailResult.success) {
+        await orderService.update(saveResult.id, {
+          emailNotifications: {
+            orderConfirmation: {
+              sent: true,
+              sentAt: new Date().toISOString(),
+              status: 'delivered'
+            }
+          }
+        });
+      } else {
+        await orderService.update(saveResult.id, {
+          emailNotifications: {
+            orderConfirmation: {
+              sent: false,
+              sentAt: new Date().toISOString(),
+              status: 'failed'
+            }
+          }
+        });
+      }
       
       Modal.success({
         title: '訂單提交成功！',

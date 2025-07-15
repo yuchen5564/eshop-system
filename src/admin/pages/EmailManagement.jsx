@@ -41,7 +41,32 @@ const EmailManagement = () => {
 
   useEffect(() => {
     loadEmailLogs();
+    loadEmailSettings();
   }, []);
+
+  const loadEmailSettings = async () => {
+    try {
+      const result = await emailManagementService.getEmailSettings();
+      if (result.success && result.data) {
+        const settings = result.data;
+        // 轉換資料庫格式為表單格式
+        const formData = {
+          smtpHost: settings.smtp?.host || '',
+          smtpPort: settings.smtp?.port || 587,
+          smtpSecure: settings.smtp?.secure || false,
+          smtpUser: settings.smtp?.auth?.user || '',
+          smtpPass: settings.smtp?.auth?.pass || '',
+          fromName: settings.sender?.name || '',
+          fromEmail: settings.sender?.email || '',
+          adminEmail: settings.adminEmail || '',
+          enabled: settings.isActive || false
+        };
+        setEmailConfig(formData);
+      }
+    } catch (error) {
+      console.error('載入郵件設定失敗:', error);
+    }
+  };
 
   const loadEmailLogs = async () => {
     try {
@@ -244,11 +269,36 @@ const EmailManagement = () => {
   const handleSaveConfig = async (values) => {
     setLoading(true);
     try {
-      setEmailConfig(values);
-      emailService.updateEmailConfig(values);
-      message.success('郵件設定已更新');
+      // 轉換表單數據為資料庫格式
+      const settingsData = {
+        smtp: {
+          host: values.smtpHost,
+          port: values.smtpPort,
+          secure: values.smtpSecure,
+          auth: {
+            user: values.smtpUser,
+            pass: values.smtpPass
+          }
+        },
+        sender: {
+          name: values.fromName,
+          email: values.fromEmail
+        },
+        adminEmail: values.adminEmail,
+        isActive: values.enabled
+      };
+      
+      // 保存到資料庫
+      const result = await emailManagementService.updateEmailSettings(settingsData);
+      
+      if (result.success) {
+        setEmailConfig(values);
+        message.success('郵件設定已更新');
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
-      message.error('設定更新失敗');
+      message.error('設定更新失敗: ' + error.message);
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Table, 
   Card, 
@@ -27,14 +27,16 @@ import {
   DownloadOutlined,
   CalendarOutlined
 } from '@ant-design/icons';
-import { mockOrders, orderStatusOptions, paymentStatusOptions, shippingCarriers } from '../data/mockAdminData';
+import { orderStatusOptions, paymentStatusOptions, shippingCarriers } from '../data/mockAdminData';
 import emailService from '../../services/emailService';
+import orderService from '../../services/orderService';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
 
 const OrderManagement = () => {
-  const [orders, setOrders] = useState(mockOrders);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isShippingModalVisible, setIsShippingModalVisible] = useState(false);
@@ -45,18 +47,57 @@ const OrderManagement = () => {
   const [dateRange, setDateRange] = useState([]);
   const [emailSending, setEmailSending] = useState(false);
 
-  const handleStatusChange = (orderId, newStatus) => {
-    setOrders(orders.map(order => 
-      order.id === orderId ? { ...order, status: newStatus } : order
-    ));
-    message.success('訂單狀態已更新');
+  // 載入訂單數據
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  const loadOrders = async () => {
+    setLoading(true);
+    try {
+      const result = await orderService.getAll();
+      if (result.success) {
+        setOrders(result.data);
+      } else {
+        message.error('載入訂單失敗: ' + result.error);
+      }
+    } catch (error) {
+      message.error('載入訂單失敗: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handlePaymentStatusChange = (orderId, newPaymentStatus) => {
-    setOrders(orders.map(order => 
-      order.id === orderId ? { ...order, paymentStatus: newPaymentStatus } : order
-    ));
-    message.success('付款狀態已更新');
+  const handleStatusChange = async (orderId, newStatus) => {
+    try {
+      const result = await orderService.updateStatus(orderId, newStatus);
+      if (result.success) {
+        setOrders(orders.map(order => 
+          order.id === orderId ? { ...order, status: newStatus } : order
+        ));
+        message.success('訂單狀態已更新');
+      } else {
+        message.error('更新訂單狀態失敗: ' + result.error);
+      }
+    } catch (error) {
+      message.error('更新訂單狀態失敗: ' + error.message);
+    }
+  };
+
+  const handlePaymentStatusChange = async (orderId, newPaymentStatus) => {
+    try {
+      const result = await orderService.update(orderId, { paymentStatus: newPaymentStatus });
+      if (result.success) {
+        setOrders(orders.map(order => 
+          order.id === orderId ? { ...order, paymentStatus: newPaymentStatus } : order
+        ));
+        message.success('付款狀態已更新');
+      } else {
+        message.error('更新付款狀態失敗: ' + result.error);
+      }
+    } catch (error) {
+      message.error('更新付款狀態失敗: ' + error.message);
+    }
   };
 
   const showOrderDetail = (order) => {
@@ -117,9 +158,20 @@ const OrderManagement = () => {
         message.warning('出貨資訊已更新，但郵件發送失敗');
       }
 
-      setOrders(orders.map(order => 
-        order.id === selectedOrder.id ? updatedOrder : order
-      ));
+      // 更新到數據庫
+      const updateResult = await orderService.update(selectedOrder.id, {
+        status: 'shipped',
+        shippingInfo,
+        emailNotifications: updatedOrder.emailNotifications
+      });
+      
+      if (updateResult.success) {
+        setOrders(orders.map(order => 
+          order.id === selectedOrder.id ? updatedOrder : order
+        ));
+      } else {
+        message.error('更新出貨資訊到數據庫失敗');
+      }
 
       setIsShippingModalVisible(false);
       shippingForm.resetFields();
@@ -148,11 +200,21 @@ const OrderManagement = () => {
         }
       };
       
-      setOrders(orders.map(order => 
-        order.id === selectedOrder.id ? updatedOrder : order
-      ));
-
-      message.success('出貨資訊已更新（未發送通知郵件）');
+      // 更新到數據庫
+      const updateResult = await orderService.update(selectedOrder.id, {
+        status: 'shipped',
+        shippingInfo,
+        emailNotifications: updatedOrder.emailNotifications
+      });
+      
+      if (updateResult.success) {
+        setOrders(orders.map(order => 
+          order.id === selectedOrder.id ? updatedOrder : order
+        ));
+        message.success('出貨資訊已更新（未發送通知郵件）');
+      } else {
+        message.error('更新出貨資訊到數據庫失敗');
+      }
       setIsShippingModalVisible(false);
       shippingForm.resetFields();
     } catch {
@@ -470,6 +532,7 @@ const OrderManagement = () => {
           columns={columns}
           dataSource={filteredOrders}
           rowKey="id"
+          loading={loading}
           pagination={{
             pageSize: 10,
             showSizeChanger: true,

@@ -98,7 +98,8 @@ class EmailManagementService extends FirestoreService {
       isActive: true
     };
 
-    const result = await this.add(defaultSettings);
+    // 使用固定ID創建郵件設定
+    const result = await this.addWithId('default_email_settings', defaultSettings);
     return {
       success: result.success,
       message: result.success ? '郵件設定初始化成功' : '郵件設定初始化失敗',

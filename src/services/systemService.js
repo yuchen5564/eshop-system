@@ -38,7 +38,7 @@ class SystemService {
   }
 
   // 初始化整個系統
-  async initializeSystem(adminData) {
+  async initializeSystem(adminData, progressCallback = null) {
     try {
       const results = {
         admin: null,
@@ -51,72 +51,99 @@ class SystemService {
         logisticsSettings: null
       };
 
+      const totalSteps = 8;
+      let currentStep = 0;
+
+      const updateProgress = (step, status, message) => {
+        currentStep = step;
+        const progress = Math.round((currentStep / totalSteps) * 100);
+        if (progressCallback) {
+          progressCallback({
+            step: currentStep,
+            total: totalSteps,
+            progress,
+            status,
+            message
+          });
+        }
+        console.log(`[${currentStep}/${totalSteps}] ${message}`);
+      };
+
       // 1. 創建管理員帳戶
-      console.log('正在創建管理員帳戶...');
+      updateProgress(1, 'processing', '正在創建管理員帳戶...');
       const adminResult = await signUp(adminData.email, adminData.password, adminData.displayName);
       results.admin = adminResult;
       
       if (!adminResult.success) {
         throw new Error(`創建管理員帳戶失敗: ${adminResult.error}`);
       }
+      updateProgress(1, 'completed', '管理員帳戶創建完成');
 
       // 2. 初始化分類
-      console.log('正在初始化商品分類...');
+      updateProgress(2, 'processing', '正在初始化商品分類...');
       results.categories = await this.initializeCategories();
       
       if (!results.categories.success) {
         throw new Error(`初始化分類失敗: ${results.categories.error}`);
       }
+      updateProgress(2, 'completed', `商品分類初始化完成 (${results.categories.count} 個)`);
 
       // 3. 初始化商品
-      console.log('正在初始化商品資料...');
+      updateProgress(3, 'processing', '正在初始化商品資料...');
       results.products = await this.initializeProducts();
       
       if (!results.products.success) {
         throw new Error(`初始化商品失敗: ${results.products.error}`);
       }
+      updateProgress(3, 'completed', `商品資料初始化完成 (${results.products.count} 個)`);
 
       // 4. 初始化優惠券
-      console.log('正在初始化優惠券...');
+      updateProgress(4, 'processing', '正在初始化優惠券...');
       results.coupons = await this.initializeCoupons();
       
       if (!results.coupons.success) {
         throw new Error(`初始化優惠券失敗: ${results.coupons.error}`);
       }
+      updateProgress(4, 'completed', `優惠券初始化完成 (${results.coupons.count} 個)`);
 
       // 5. 初始化付款方式
-      console.log('正在初始化付款方式...');
+      updateProgress(5, 'processing', '正在初始化付款方式...');
       results.paymentMethods = await this.initializePaymentMethods();
       
       if (!results.paymentMethods.success) {
         throw new Error(`初始化付款方式失敗: ${results.paymentMethods.error}`);
       }
+      updateProgress(5, 'completed', `付款方式初始化完成 (${results.paymentMethods.count} 個)`);
 
       // 6. 初始化郵件設定
-      console.log('正在初始化郵件設定...');
+      updateProgress(6, 'processing', '正在初始化郵件設定...');
       results.emailSettings = await this.initializeEmailSettings();
       
       if (!results.emailSettings.success) {
         throw new Error(`初始化郵件設定失敗: ${results.emailSettings.error}`);
       }
+      updateProgress(6, 'completed', '郵件設定初始化完成');
 
       // 7. 初始化郵件模板
-      console.log('正在初始化郵件模板...');
+      updateProgress(7, 'processing', '正在初始化郵件模板...');
       results.emailTemplates = await this.initializeEmailTemplates();
       
       if (!results.emailTemplates.success) {
         throw new Error(`初始化郵件模板失敗: ${results.emailTemplates.error}`);
       }
+      updateProgress(7, 'completed', '郵件模板初始化完成');
 
       // 8. 初始化物流設定
-      console.log('正在初始化物流設定...');
+      updateProgress(8, 'processing', '正在初始化物流設定...');
       results.logisticsSettings = await this.initializeLogisticsSettings();
       
       if (!results.logisticsSettings.success) {
         throw new Error(`初始化物流設定失敗: ${results.logisticsSettings.error}`);
       }
+      updateProgress(8, 'completed', '物流設定初始化完成');
 
-      console.log('系統初始化完成！');
+      updateProgress(8, 'completed', '系統初始化完成！所有組件已成功配置');
+      
       return {
         success: true,
         message: '系統初始化完成',
@@ -124,6 +151,15 @@ class SystemService {
       };
     } catch (error) {
       console.error('系統初始化失敗:', error);
+      if (progressCallback) {
+        progressCallback({
+          step: currentStep,
+          total: totalSteps,
+          progress: Math.round((currentStep / totalSteps) * 100),
+          status: 'error',
+          message: `初始化失敗: ${error.message}`
+        });
+      }
       return {
         success: false,
         error: error.message,
@@ -195,7 +231,9 @@ class SystemService {
 
       let successCount = 0;
       for (const category of defaultCategories) {
-        const result = await categoryService.add(category);
+        // 使用自訂ID創建分類
+        const { id, ...categoryData } = category;
+        const result = await categoryService.addWithId(id, categoryData);
         if (result.success) {
           successCount++;
         }
@@ -220,9 +258,13 @@ class SystemService {
     try {
       let successCount = 0;
       for (const product of mockProducts) {
-        const result = await productService.add(product);
+        // 使用自訂ID創建商品
+        const { id, ...productData } = product;
+        const result = await productService.addWithId(id, productData);
         if (result.success) {
           successCount++;
+        } else {
+          console.error(`Failed to create product ${id}:`, result.error);
         }
       }
 
@@ -311,7 +353,9 @@ class SystemService {
 
       let successCount = 0;
       for (const coupon of defaultCoupons) {
-        const result = await couponService.add(coupon);
+        // 使用自訂ID創建優惠券
+        const { id, ...couponData } = coupon;
+        const result = await couponService.addWithId(id, couponData);
         if (result.success) {
           successCount++;
         }

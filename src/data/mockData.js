@@ -1,7 +1,7 @@
 
 export const mockProducts = [
   {
-    id: 1,
+    id: 'product_tomato_001',
     name: '有機番茄',
     price: 150,
     originalPrice: 180,
@@ -12,13 +12,21 @@ export const mockProducts = [
     location: '台中市',
     stock: 25,
     unit: '斤',
-    isActive: true
+    isActive: true,
+    featured: true,
+    tags: ['有機', '無農藥', '新鮮'],
+    nutritionInfo: {
+      calories: 18,
+      vitamin_c: '高',
+      fiber: '中'
+    },
+    storageInfo: '冷藏保存，建議3-5天內食用完畢'
   },
   {
-    id: 2,
+    id: 'product_cabbage_002',
     name: '高山高麗菜',
     price: 80,
-    // originalPrice: 100,
+    originalPrice: 100,
     image: '🥬',
     category: 'vegetable',
     description: '來自合歡山的高山高麗菜，清脆爽口',
@@ -26,10 +34,18 @@ export const mockProducts = [
     location: '南投縣',
     stock: 15,
     unit: '顆',
-    isActive: true
+    isActive: true,
+    featured: false,
+    tags: ['高山', '清脆', '當季'],
+    nutritionInfo: {
+      calories: 25,
+      vitamin_k: '高',
+      fiber: '高'
+    },
+    storageInfo: '冷藏保存，建議7天內食用完畢'
   },
   {
-    id: 3,
+    id: 'product_carrot_003',
     name: '有機胡蘿蔔',
     price: 120,
     originalPrice: 140,
@@ -40,10 +56,18 @@ export const mockProducts = [
     location: '彰化縣',
     stock: 30,
     unit: '斤',
-    isActive: false
+    isActive: false,
+    featured: false,
+    tags: ['有機', '營養', '胡蘿蔔素'],
+    nutritionInfo: {
+      calories: 41,
+      vitamin_a: '極高',
+      fiber: '高'
+    },
+    storageInfo: '陰涼乾燥處保存，可保存2-3週'
   },
   {
-    id: 4,
+    id: 'product_corn_004',
     name: '新鮮玉米',
     price: 100,
     originalPrice: 120,
@@ -54,10 +78,18 @@ export const mockProducts = [
     location: '雲林縣',
     stock: 20,
     unit: '根',
-    isActive: true
+    isActive: true,
+    featured: true,
+    tags: ['香甜', '新鮮', '多用途'],
+    nutritionInfo: {
+      calories: 86,
+      carbs: '高',
+      fiber: '中'
+    },
+    storageInfo: '冷藏保存，建議3天內食用完畢'
   },
   {
-    id: 5,
+    id: 'product_mango_005',
     name: '愛文芒果',
     price: 280,
     originalPrice: 320,
@@ -68,10 +100,18 @@ export const mockProducts = [
     location: '台南市',
     stock: 12,
     unit: '斤',
-    isActive: true
+    isActive: true,
+    featured: true,
+    tags: ['愛文', '香甜', '台南特產'],
+    nutritionInfo: {
+      calories: 60,
+      vitamin_c: '高',
+      vitamin_a: '高'
+    },
+    storageInfo: '室溫熟成後冷藏，建議5天內食用完畢'
   },
   {
-    id: 6,
+    id: 'product_banana_006',
     name: '有機香蕉',
     price: 90,
     originalPrice: 110,
@@ -82,10 +122,18 @@ export const mockProducts = [
     location: '屏東縣',
     stock: 35,
     unit: '串',
-    isActive: true
+    isActive: true,
+    featured: false,
+    tags: ['有機', '天然熟成', '高鉀'],
+    nutritionInfo: {
+      calories: 89,
+      potassium: '高',
+      vitamin_b6: '高'
+    },
+    storageInfo: '室溫保存，避免陽光直射'
   },
   {
-    id: 7,
+    id: 'product_strawberry_007',
     name: '溫室草莓',
     price: 350,
     originalPrice: 400,
@@ -96,10 +144,18 @@ export const mockProducts = [
     location: '苗栗縣',
     stock: 8,
     unit: '盒',
-    isActive: false
+    isActive: false,
+    featured: true,
+    tags: ['溫室', '香甜', '顆粒飽滿'],
+    nutritionInfo: {
+      calories: 32,
+      vitamin_c: '極高',
+      antioxidants: '高'
+    },
+    storageInfo: '冷藏保存，建議2-3天內食用完畢'
   },
   {
-    id: 8,
+    id: 'product_rice_008',
     name: '池上米',
     price: 450,
     originalPrice: 500,
@@ -110,7 +166,15 @@ export const mockProducts = [
     location: '台東縣',
     stock: 50,
     unit: '包(3kg)',
-    isActive: true
+    isActive: true,
+    featured: true,
+    tags: ['池上米', '優質', '香Q'],
+    nutritionInfo: {
+      calories: 130,
+      carbs: '高',
+      protein: '中'
+    },
+    storageInfo: '密封乾燥處保存，可保存6個月'
   }
 ];
 
