@@ -75,8 +75,14 @@ const LogisticsManagement = () => {
 
   const handleMethodSubmit = async (values) => {
     try {
+      // 清理 undefined 或 null 為空字串，特別是 trackingUrl
+      const sanitizedValues = {
+        ...values,
+        trackingUrl: values.trackingUrl?.trim() || ''  // 如果是 undefined/null/空白字串 → ''
+      };
+
       if (editingMethod) {
-        const result = await logisticsService.updateLogisticsMethod(editingMethod.id, values);
+        const result = await logisticsService.updateLogisticsMethod(editingMethod.id, sanitizedValues);
         if (result.success) {
           message.success('物流方法已更新');
           loadLogisticsMethods();
@@ -86,7 +92,7 @@ const LogisticsManagement = () => {
         }
       } else {
         const newMethod = {
-          ...values,
+          ...sanitizedValues,
           isActive: true,
           sortOrder: logisticsMethods.length + 1
         };
@@ -99,13 +105,13 @@ const LogisticsManagement = () => {
           return;
         }
       }
+
       setMethodModalVisible(false);
       form.resetFields();
     } catch (error) {
       message.error('操作失敗：' + error.message);
     }
   };
-
   const handleDeleteMethod = async (methodId) => {
     try {
       const result = await logisticsService.deleteLogisticsMethod(methodId);

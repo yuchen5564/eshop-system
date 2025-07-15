@@ -22,6 +22,7 @@ class LogisticsService extends FirestoreService {
 
   // 新增物流方法
   async addLogisticsMethod(methodData) {
+    console.log('Adding logistics method:', methodData);
     return await this.add(methodData);
   }
 
