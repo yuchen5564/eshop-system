@@ -25,7 +25,8 @@ import {
   SettingOutlined,
   EditOutlined,
   PlusOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  ReloadOutlined
 } from '@ant-design/icons';
 import paymentService from '../../services/paymentService';
 
@@ -183,9 +184,19 @@ const PaymentManagement = () => {
     <div style={{ padding: '24px' }}>
       <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Title level={3} style={{ margin: 0 }}>付款方式管理</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddMethod}>
-          新增付款方式
-        </Button>
+        <Space>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={() => {
+              loadPaymentMethods();
+            }}
+          >
+            刷新
+          </Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAddMethod}>
+            新增付款方式
+          </Button>
+        </Space>
       </div>
       
       <Card>

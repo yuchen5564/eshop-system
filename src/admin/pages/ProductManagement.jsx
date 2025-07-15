@@ -23,7 +23,8 @@ import {
   EditOutlined,
   DeleteOutlined,
   SearchOutlined,
-  UploadOutlined
+  UploadOutlined,
+  ReloadOutlined
 } from '@ant-design/icons';
 import productService from '../../services/productService';
 import categoryService from '../../services/categoryService';
@@ -297,9 +298,19 @@ const ProductManagement = () => {
     <div style={{ padding: '24px' }}>
       <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Title level={3} style={{ margin: 0 }}>商品管理</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddProduct}>
-          新增商品
-        </Button>
+        <Space>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={() => {
+              loadProducts();
+            }}
+          >
+            刷新
+          </Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAddProduct}>
+            新增商品
+          </Button>
+        </Space>
       </div>
       
       <Card>

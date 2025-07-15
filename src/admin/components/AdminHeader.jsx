@@ -123,18 +123,18 @@ const AdminHeader = ({ collapsed, onToggleCollapse, onBackToSite, style }) => {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         <Button
-          type="primary"
+          tcolor="default" variant="filled"
           onClick={onBackToSite}
           style={{ marginRight: '8px' }}
         >
           返回網站
         </Button>
         
-        <Button
+        {/* <Button
           type="text"
           icon={<BellOutlined />}
           style={{ fontSize: '16px' }}
-        />
+        /> */}
         
         <Dropdown
           menu={{ items: userMenuItems, onClick: handleMenuClick }}

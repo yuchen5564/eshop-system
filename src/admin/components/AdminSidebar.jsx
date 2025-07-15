@@ -62,16 +62,16 @@ const AdminSidebar = ({ selectedKey, onMenuSelect, collapsed }) => {
       icon: <TeamOutlined />,
       label: '用戶管理'
     },
-    {
-      key: 'analytics',
-      icon: <BarChartOutlined />,
-      label: '數據分析'
-    },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: '系統設定'
-    }
+    // {
+    //   key: 'analytics',
+    //   icon: <BarChartOutlined />,
+    //   label: '數據分析'
+    // },
+    // {
+    //   key: 'settings',
+    //   icon: <SettingOutlined />,
+    //   label: '系統設定'
+    // }
   ];
 
   return (

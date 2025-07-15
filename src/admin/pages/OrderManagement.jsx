@@ -25,7 +25,8 @@ import {
   TruckOutlined,
   SendOutlined,
   DownloadOutlined,
-  CalendarOutlined
+  CalendarOutlined,
+  ReloadOutlined
 } from '@ant-design/icons';
 import { orderStatusOptions, paymentStatusOptions } from '../data/mockAdminData';
 import emailService from '../../services/emailService';
@@ -550,6 +551,14 @@ const OrderManagement = () => {
           >
             重新載入物流選項
           </Button> */}
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={() => {
+              loadOrders();
+            }}
+          >
+            刷新
+          </Button>
           <Button 
             type="primary" 
             icon={<DownloadOutlined />} 

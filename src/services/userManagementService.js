@@ -14,9 +14,10 @@ import {
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
   updateProfile,
-  sendEmailVerification
+  sendEmailVerification,
+  signOut
 } from 'firebase/auth';
-import { db, auth } from '../firebase/firebase';
+import { db, auth, secondaryAuth } from '../firebase/firebase';
 
 class UserManagementService {
   constructor() {
@@ -65,8 +66,8 @@ class UserManagementService {
         };
       }
 
-      // 在 Firebase Auth 中創建用戶
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // 使用 secondary auth 創建用戶，避免影響當前登入狀態
+      const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
       const user = userCredential.user;
 
       // 更新用戶顯示名稱
@@ -78,6 +79,9 @@ class UserManagementService {
 
       // 不再自動發送驗證郵件，新用戶可直接使用
       // await sendEmailVerification(user);
+
+      // 立即登出 secondary auth，避免影響當前管理員的登入狀態
+      await signOut(secondaryAuth);
 
       // 在 Firestore 中保存用戶信息
       const userDoc = {

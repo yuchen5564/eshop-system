@@ -219,11 +219,11 @@ const UserManagement = () => {
           <div>
             <div style={{ fontWeight: 'bold' }}>
               {record.displayName || '未設定姓名'}
-              {record.emailVerified && (
+              {/* {record.emailVerified && (
                 <Tooltip title="郵箱已驗證">
                   <CheckCircleOutlined style={{ color: '#52c41a', marginLeft: '4px' }} />
                 </Tooltip>
-              )}
+              )} */}
             </div>
             <div style={{ fontSize: '12px', color: '#666' }}>{record.email}</div>
             <div style={{ fontSize: '11px', color: '#999' }}>

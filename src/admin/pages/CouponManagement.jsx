@@ -30,7 +30,8 @@ import {
   PercentageOutlined,
   CalendarOutlined,
   UserOutlined,
-  EyeOutlined
+  EyeOutlined,
+  ReloadOutlined
 } from '@ant-design/icons';
 import couponService from '../../services/couponService';
 import dayjs from 'dayjs';
@@ -368,13 +369,23 @@ const CouponManagement = () => {
     <div style={{ padding: '24px' }}>
       <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Title level={3} style={{ margin: 0 }}>優惠券管理</Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleCreate}
-        >
-          新增優惠券
-        </Button>
+        <Space>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={() => {
+              loadCoupons();
+            }}
+          >
+            刷新
+          </Button>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleCreate}
+          >
+            新增優惠券
+          </Button>
+        </Space>
       </div>
       
       {/* 統計卡片 */}

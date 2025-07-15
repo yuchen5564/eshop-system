@@ -117,11 +117,11 @@ const Header = ({
               </Badge>
             </Dropdown>
             
-            <Button 
+            {/* <Button 
               type="text" 
               icon={<UserOutlined />}
               size="large"
-            />
+            /> */}
             
             <Button 
               type="text" 

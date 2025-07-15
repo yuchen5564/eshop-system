@@ -17,7 +17,8 @@ import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
-  AppstoreOutlined
+  AppstoreOutlined,
+  ReloadOutlined
 } from '@ant-design/icons';
 import categoryService from '../../services/categoryService';
 
@@ -280,13 +281,23 @@ const CategoryManagement = () => {
     <div style={{ padding: '24px' }}>
       <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Title level={3} style={{ margin: 0 }}>產品類別管理</Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleCreate}
-        >
-          新增類別
-        </Button>
+        <Space>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={() => {
+              loadCategories();
+            }}
+          >
+            刷新
+          </Button>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleCreate}
+          >
+            新增類別
+          </Button>
+        </Space>
       </div>
 
       <Card>

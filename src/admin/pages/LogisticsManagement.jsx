@@ -20,7 +20,8 @@ import {
   EditOutlined,
   DeleteOutlined,
   PlusOutlined,
-  SettingOutlined
+  SettingOutlined,
+  ReloadOutlined
 } from '@ant-design/icons';
 import { logisticsService } from '../../services/logisticsService';
 
@@ -279,6 +280,14 @@ const LogisticsManagement = () => {
           >
             修復物流方法
           </Button> */}
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={() => {
+              loadLogisticsMethods();
+            }}
+          >
+            刷新
+          </Button>
           <Button
             type="primary"
             icon={<PlusOutlined />}
