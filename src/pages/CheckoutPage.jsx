@@ -210,7 +210,8 @@ const CheckoutPage = ({
       // 設置訂單結果並顯示成功 Modal
       setOrderResult({
         orderId,
-        emailSuccess: emailResult.success
+        emailSuccess: emailResult.success,
+        skipped: emailResult.skipped || false
       });
       setOrderSuccessModalVisible(true);
       
@@ -553,13 +554,13 @@ const CheckoutPage = ({
             <p style={{ marginBottom: '16px' }}>
               我們將盡快為您處理訂單，感謝您的購買！
             </p>
-            {orderResult.emailSuccess ? (
+            {!orderResult.skipped ? (
               <p style={{ color: '#52c41a', marginBottom: '8px' }}>
                 ✅ 訂單確認郵件已發送至您的信箱
               </p>
             ) : (
-              <p style={{ color: '#faad14', marginBottom: '8px' }}>
-                ⚠️ 訂單已建立，但郵件發送可能有延遲
+              <p style={{ color: '#52c41a', marginBottom: '8px' }}>
+                ✅ 訂單已建立，請記錄您的訂單編號
               </p>
             )}
             <div style={{ 

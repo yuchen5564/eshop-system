@@ -55,6 +55,11 @@ class EmailService {
 
       await this.sendEmail(customerEmail);
       await this.sendEmail(adminEmail);
+      const isEnabled = await this.isEmailEnabled();
+      if (!isEnabled) {
+        console.log('郵件發送功能已停用，跳過發送');
+        return { success: true, message: '郵件發送功能已停用', skipped: true };
+      }
       console.log('訂單確認郵件已發送');
       return { success: true, message: '郵件發送成功' };
     } catch (error) {
@@ -349,7 +354,7 @@ class EmailService {
     return this.logisticsMethodsCache || [];
   }
 
-    async getCarrierName(carrierId) {
+  async getCarrierName(carrierId) {
     try {
       // 從緩存或服務獲取物流方式數據
       const logisticsMethods = await this.getLogisticsMethodsData();
