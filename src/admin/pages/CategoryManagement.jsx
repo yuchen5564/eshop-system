@@ -32,6 +32,8 @@ const CategoryManagement = () => {
   const [editingCategory, setEditingCategory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [form] = Form.useForm();
+  const [pageSize, setPageSize] = useState(10); // 預設每頁10筆
+  
 
   useEffect(() => {
     loadCategories();
@@ -308,9 +310,13 @@ const CategoryManagement = () => {
           rowKey="id"
           loading={loading}
           pagination={{
-            pageSize: 10,
+            pageSize: pageSize,
             showSizeChanger: true,
-            showTotal: (total) => `共 ${total} 個類別`
+            pageSizeOptions: ['5', '10', '20', '50', '100'],
+            showTotal: (total) => `共 ${total} 個類別`,
+            onShowSizeChange: (current, size) => {
+              setPageSize(size);
+            }
           }}
           scroll={{ x: 1200 }}
         />

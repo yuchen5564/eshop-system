@@ -49,6 +49,8 @@ const EmailManagement = () => {
   const [emailStats, setEmailStats] = useState({});
   const [emailTemplates, setEmailTemplates] = useState({});
   const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [pageSize, setPageSize] = useState(10); // 預設每頁10筆
+
   
   // 新增 - 編輯模板彈窗狀態
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -622,10 +624,14 @@ const EmailManagement = () => {
             dataSource={emailLogs}
             rowKey="id"
             pagination={{
-              pageSize: 20,
+              pageSize: pageSize,
               showSizeChanger: true,
               showQuickJumper: true,
-              showTotal: (total) => `共 ${total} 筆記錄`
+              showTotal: (total) => `共 ${total} 筆記錄`,
+              pageSizeOptions: ['5', '10', '20', '50', '100'],
+              onShowSizeChange: (current, size) => {
+                setPageSize(size);
+              }
             }}
             size="middle"
             scroll={{ x: 1200 }}

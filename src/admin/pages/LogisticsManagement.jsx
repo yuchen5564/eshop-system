@@ -33,6 +33,8 @@ const LogisticsManagement = () => {
   const [editingMethod, setEditingMethod] = useState(null);
   const [loading, setLoading] = useState(true);
   const [form] = Form.useForm();
+  const [pageSize, setPageSize] = useState(10); // 預設每頁10筆
+
 
   useEffect(() => {
     loadLogisticsMethods();
@@ -305,9 +307,13 @@ const LogisticsManagement = () => {
           rowKey="id"
           loading={loading}
           pagination={{
-            pageSize: 10,
+            pageSize: pageSize,
             showSizeChanger: true,
-            showTotal: (total) => `共 ${total} 個物流方法`
+            showTotal: (total) => `共 ${total} 個物流方法`,
+            pageSizeOptions: ['5', '10', '20', '50', '100'],
+            onShowSizeChange: (current, size) => {
+              setPageSize(size);
+            }
           }}
           size="middle"
           scroll={{ x: 1200 }}

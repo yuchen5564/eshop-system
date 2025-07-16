@@ -47,6 +47,7 @@ const UserManagement = () => {
   const [userModalVisible, setUserModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [form] = Form.useForm();
+  const [pageSize, setPageSize] = useState(10); // 預設每頁10筆
   
   // 密碼重置相關狀態
   const [resetPasswordModalVisible, setResetPasswordModalVisible] = useState(false);
@@ -382,10 +383,14 @@ const UserManagement = () => {
           rowKey="id"
           loading={loading}
           pagination={{
-            pageSize: 10,
+            pageSize: pageSize,
             showSizeChanger: true,
             showQuickJumper: true,
-            showTotal: (total, range) => `顯示 ${range[0]}-${range[1]} 項，共 ${total} 項`
+            showTotal: (total, range) => `顯示 ${range[0]}-${range[1]} 項，共 ${total} 項`,
+            pageSizeOptions: ['5', '10', '20', '50', '100'],
+            onShowSizeChange: (current, size) => {
+              setPageSize(size);
+            }
           }}
           size="middle"
           scroll={{ x: 1200 }}

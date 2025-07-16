@@ -44,6 +44,7 @@ const ProductManagement = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form] = Form.useForm();
+  const [pageSize, setPageSize] = useState(10); // 預設每頁10筆
 
   useEffect(() => {
     loadData();
@@ -362,10 +363,14 @@ const ProductManagement = () => {
           rowKey="id"
           loading={loading}
           pagination={{
-            pageSize: 10,
+            pageSize: pageSize,
             showSizeChanger: true,
             showQuickJumper: true,
-            showTotal: (total) => `共 ${total} 個商品`
+            showTotal: (total) => `共 ${total} 個商品`,
+            pageSizeOptions: ['5', '10', '20', '50', '100'],
+            onShowSizeChange: (current, size) => {
+              setPageSize(size);
+            }
           }}
           scroll={{ x: 1200 }}
         />
