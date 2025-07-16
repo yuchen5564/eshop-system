@@ -471,10 +471,10 @@ class EmailService {
   async testEmailSending(testEmail) {
     const testData = {
       to: testEmail,
-      subject: '測試郵件 - 農鮮市集郵件系統',
+      subject: '測試郵件 - 郵件系統',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #52c41a;">🌱 郵件系統測試成功</h2>
+          <h2 style="color: #52c41a;">郵件系統測試成功</h2>
           <p>恭喜！您的農鮮市集郵件系統已正常運作。</p>
           <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <p><strong>測試時間：</strong>${new Date().toLocaleString('zh-TW')}</p>
@@ -483,7 +483,7 @@ class EmailService {
           <p style="color: #666;">此為系統自動發送的測試郵件，請勿直接回覆。</p>
         </div>
       `,
-      text: `郵件系統測試成功\n\n恭喜！您的農鮮市集郵件系統已正常運作。\n\n測試時間：${new Date().toLocaleString('zh-TW')}\n發送方式：Google App Script\n\n此為系統自動發送的測試郵件，請勿直接回覆。`,
+      text: `郵件系統測試成功\n\n恭喜！您的郵件系統已正常運作。\n\n測試時間：${new Date().toLocaleString('zh-TW')}\n發送方式：Google App Script\n\n此為系統自動發送的測試郵件，請勿直接回覆。`,
       type: 'test'
     };
 

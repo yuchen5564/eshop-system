@@ -200,7 +200,8 @@ function prepareMailOptions(data) {
     to: data.to,
     subject: data.subject,
     replyTo: data.from.email,
-    name: data.from.name || data.from.email
+    name: data.from.name || data.from.email,
+    fromEmail: data.from.email // 新增寄件者信箱
   };
   
   // 設定郵件內容
@@ -228,17 +229,38 @@ function prepareMailOptions(data) {
  */
 function sendGmailMessage(options) {
   try {
+    // 準備郵件選項
+    const mailOptions = {
+      htmlBody: options.htmlBody,
+      replyTo: options.replyTo,
+      name: options.name,
+      attachments: options.attachments
+    };
+    
+    // 嘗試使用指定的寄件者信箱（如果是已驗證的別名）
+    if (options.fromEmail && options.fromEmail !== Session.getActiveUser().getEmail()) {
+      try {
+        // 檢查是否為已驗證的別名
+        const aliases = GmailApp.getAliases();
+        const isValidAlias = aliases.includes(options.fromEmail);
+        
+        if (isValidAlias) {
+          mailOptions.from = options.fromEmail;
+          console.log(`使用已驗證的別名: ${options.fromEmail}`);
+        } else {
+          console.warn(`${options.fromEmail} 不是已驗證的別名，使用預設寄件者`);
+        }
+      } catch (aliasError) {
+        console.warn('檢查別名時發生錯誤:', aliasError);
+      }
+    }
+    
     // 使用Gmail服務發送郵件
     GmailApp.sendEmail(
       options.to,
       options.subject,
       options.body,
-      {
-        htmlBody: options.htmlBody,
-        replyTo: options.replyTo,
-        name: options.name,
-        attachments: options.attachments
-      }
+      mailOptions
     );
     
     return {
