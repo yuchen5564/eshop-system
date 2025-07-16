@@ -246,7 +246,7 @@ class EmailTemplateService extends FirestoreService {
 
     let successCount = 0;
     for (const template of defaultTemplates) {
-      const result = await this.add(template);
+      const result = await this.addWithId(template.id, template);
       if (result.success) {
         successCount++;
       }
