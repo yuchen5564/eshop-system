@@ -86,7 +86,12 @@ const AdminDashboard = () => {
         
         // 計算訂單統計
         calculatedStats.totalOrders = orders.length;
-        calculatedStats.totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+        calculatedStats.totalRevenue = orders.reduce((sum, order) => {
+          if (order.status === 'delivered' || order.status === 'shipped') {
+            return sum + (order.total || 0);
+          }
+          return sum;
+        }, 0);        
         calculatedStats.pendingOrders = orders.filter(order => order.status === 'pending').length;
         
         // 計算今日訂單和營收
@@ -200,7 +205,9 @@ const AdminDashboard = () => {
           pending: { color: 'orange', text: '待處理' },
           processing: { color: 'blue', text: '處理中' },
           shipped: { color: 'cyan', text: '已出貨' },
-          delivered: { color: 'green', text: '已送達' }
+          delivered: { color: 'green', text: '已送達' },
+          cancelled: { color: 'red', text: '已取消' },
+          refunded: { color: 'purple', text: '已退款' }
         };
         const statusInfo = statusMap[status];
         return (
