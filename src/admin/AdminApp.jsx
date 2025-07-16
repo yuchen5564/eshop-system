@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Layout } from 'antd';
 import AdminHeader from './components/AdminHeader';
 import AdminSidebar from './components/AdminSidebar';
+import { AdminLayout } from './components/ui';
 import AdminDashboard from './pages/AdminDashboard';
 import OrderManagement from './pages/OrderManagement';
 import ProductManagement from './pages/ProductManagement';
@@ -12,8 +12,7 @@ import CouponManagement from './pages/CouponManagement';
 import LogisticsManagement from './pages/LogisticsManagement';
 import UserManagement from './pages/UserManagement';
 import SystemSettings from './pages/SystemSettings';
-
-const { Content, Sider } = Layout;
+import { EmptyState } from '../components/common';
 
 const AdminApp = ({ onBackToSite }) => {
   const [collapsed, setCollapsed] = useState(false);
@@ -49,12 +48,11 @@ const AdminApp = ({ onBackToSite }) => {
         return <UserManagement />;
       case 'analytics':
         return (
-          <div style={{ padding: '24px', textAlign: 'center', height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div>
-              <h2>📊 數據分析</h2>
-              <p>功能開發中...</p>
-            </div>
-          </div>
+          <EmptyState 
+            icon="📊"
+            title="數據分析"
+            description="功能開發中..."
+          />
         );
       case 'settings':
         return <SystemSettings />;
@@ -64,62 +62,37 @@ const AdminApp = ({ onBackToSite }) => {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh', overflow: 'hidden' }}>
-      <AdminHeader 
-        collapsed={collapsed} 
-        onToggleCollapse={toggleCollapse}
-        onBackToSite={onBackToSite}
-        style={{ 
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 1000
-        }}
-      />
-      
-      <Layout style={{ marginTop: '64px', height: 'calc(100vh - 64px)' }}>
-        <Sider 
-          width={250} 
-          collapsedWidth={80}
-          collapsed={collapsed}
+    <AdminLayout
+      collapsed={collapsed}
+      header={
+        <AdminHeader 
+          collapsed={collapsed} 
+          onToggleCollapse={toggleCollapse}
+          onBackToSite={onBackToSite}
           style={{ 
-            background: '#fff',
             position: 'fixed',
+            top: 0,
             left: 0,
-            top: '64px',
-            bottom: 0,
-            zIndex: 999,
-            overflow: 'auto'
+            right: 0,
+            zIndex: 1000
           }}
-          breakpoint="lg"
+        />
+      }
+      sidebar={
+        <AdminSidebar
+          selectedKey={selectedMenu}
+          onMenuSelect={handleMenuSelect}
+          collapsed={collapsed}
           onBreakpoint={(broken) => {
             if (broken) {
               setCollapsed(true);
             }
           }}
-        >
-          <AdminSidebar
-            selectedKey={selectedMenu}
-            onMenuSelect={handleMenuSelect}
-            collapsed={collapsed}
-          />
-        </Sider>
-        
-        <Layout style={{ 
-          marginLeft: collapsed ? '80px' : '250px',
-          transition: 'margin-left 0.2s'
-        }}>
-          <Content style={{ 
-            background: '#f0f2f5', 
-            height: 'calc(100vh - 64px)',
-            overflow: 'auto'
-          }}>
-            {renderContent()}
-          </Content>
-        </Layout>
-      </Layout>
-    </Layout>
+        />
+      }
+    >
+      {renderContent()}
+    </AdminLayout>
   );
 };
 

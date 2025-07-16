@@ -1,13 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Card,
-  Table,
   Button,
   Space,
-  Typography,
   Form,
   Input,
-  Modal,
   message,
   Popconfirm,
   Switch,
@@ -17,6 +13,10 @@ import {
   Badge,
   Tooltip,
   Divider,
+  Typography,
+  Card,
+  Table,
+  Modal,
   Row,
   Col
 } from 'antd';
@@ -34,9 +34,12 @@ import {
   ExclamationCircleOutlined
 } from '@ant-design/icons';
 import userManagementService from '../../services/userManagementService';
+import { PageContainer } from '../../components/common';
+import { AdminCard, AdminTable, StatusTag } from '../components/ui';
+import { AdminModal, AdminForm, ActionButton, FilterBar } from '../components/forms';
 
-const { Title, Text } = Typography;
 const { Option } = Select;
+const { Title, Text } = Typography;
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
