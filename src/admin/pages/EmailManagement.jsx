@@ -559,105 +559,105 @@ const EmailManagement = () => {
         </Card>
       )
     },
-    {
-      key: 'edit',
-      label: (
-        <span>
-          <EyeOutlined />
-          編輯模板
-        </span>
-      ),
-      children: (
-        <Card>
-          <Title level={4}>編輯郵件模板</Title>
+    // {
+    //   key: 'edit',
+    //   label: (
+    //     <span>
+    //       <EyeOutlined />
+    //       編輯模板
+    //     </span>
+    //   ),
+    //   children: (
+    //     <Card>
+    //       <Title level={4}>編輯郵件模板</Title>
           
-          <Form
-            form={templateForm}
-            layout="vertical"
-            onFinish={handleSaveTemplate}
-          >
-            <Form.Item name="templateKey" style={{ display: 'none' }}>
-              <Input />
-            </Form.Item>
+    //       <Form
+    //         form={templateForm}
+    //         layout="vertical"
+    //         onFinish={handleSaveTemplate}
+    //       >
+    //         <Form.Item name="templateKey" style={{ display: 'none' }}>
+    //           <Input />
+    //         </Form.Item>
 
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="name"
-                  label="模板名稱"
-                  rules={[{ required: true, message: '請輸入模板名稱' }]}
-                >
-                  <Input placeholder="請輸入模板名稱" />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="enabled"
-                  label="啟用狀態"
-                  valuePropName="checked"
-                >
-                  <Switch checkedChildren="啟用" unCheckedChildren="停用" />
-                </Form.Item>
-              </Col>
-            </Row>
+    //         <Row gutter={16}>
+    //           <Col span={12}>
+    //             <Form.Item
+    //               name="name"
+    //               label="模板名稱"
+    //               rules={[{ required: true, message: '請輸入模板名稱' }]}
+    //             >
+    //               <Input placeholder="請輸入模板名稱" />
+    //             </Form.Item>
+    //           </Col>
+    //           <Col span={12}>
+    //             <Form.Item
+    //               name="enabled"
+    //               label="啟用狀態"
+    //               valuePropName="checked"
+    //             >
+    //               <Switch checkedChildren="啟用" unCheckedChildren="停用" />
+    //             </Form.Item>
+    //           </Col>
+    //         </Row>
 
-            <Form.Item
-              name="subject"
-              label="郵件主旨"
-              rules={[{ required: true, message: '請輸入郵件主旨' }]}
-            >
-              <Input placeholder="請輸入郵件主旨" />
-            </Form.Item>
+    //         <Form.Item
+    //           name="subject"
+    //           label="郵件主旨"
+    //           rules={[{ required: true, message: '請輸入郵件主旨' }]}
+    //         >
+    //           <Input placeholder="請輸入郵件主旨" />
+    //         </Form.Item>
 
-            <Form.Item
-              name="content"
-              label="郵件內容"
-              rules={[{ required: true, message: '請輸入郵件內容' }]}
-            >
-              <TextArea
-                rows={12}
-                placeholder="請輸入郵件內容"
-              />
-            </Form.Item>
+    //         <Form.Item
+    //           name="content"
+    //           label="郵件內容"
+    //           rules={[{ required: true, message: '請輸入郵件內容' }]}
+    //         >
+    //           <TextArea
+    //             rows={12}
+    //             placeholder="請輸入郵件內容"
+    //           />
+    //         </Form.Item>
 
-            <Row gutter={16}>
-              <Col span={12}>
-                <Alert
-                  message="可用變數"
-                  description={
-                    <div>
-                      {templateForm.getFieldValue('templateKey') && 
-                       availableVariables[templateForm.getFieldValue('templateKey')]?.map(variable => (
-                        <Text code key={variable} style={{ margin: '2px', display: 'inline-block' }}>
-                          {variable}
-                        </Text>
-                      ))}
-                    </div>
-                  }
-                  type="info"
-                  showIcon
-                />
-              </Col>
-              <Col span={12}>
-                <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                  <Button onClick={() => setActiveTab('templates')}>
-                    取消
-                  </Button>
-                  <Button
-                    type="primary"
-                    icon={<SaveOutlined />}
-                    htmlType="submit"
-                    loading={loading}
-                  >
-                    儲存模板
-                  </Button>
-                </Space>
-              </Col>
-            </Row>
-          </Form>
-        </Card>
-      )
-    },
+    //         <Row gutter={16}>
+    //           <Col span={12}>
+    //             <Alert
+    //               message="可用變數"
+    //               description={
+    //                 <div>
+    //                   {templateForm.getFieldValue('templateKey') && 
+    //                    availableVariables[templateForm.getFieldValue('templateKey')]?.map(variable => (
+    //                     <Text code key={variable} style={{ margin: '2px', display: 'inline-block' }}>
+    //                       {variable}
+    //                     </Text>
+    //                   ))}
+    //                 </div>
+    //               }
+    //               type="info"
+    //               showIcon
+    //             />
+    //           </Col>
+    //           <Col span={12}>
+    //             <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+    //               <Button onClick={() => setActiveTab('templates')}>
+    //                 取消
+    //               </Button>
+    //               <Button
+    //                 type="primary"
+    //                 icon={<SaveOutlined />}
+    //                 htmlType="submit"
+    //                 loading={loading}
+    //               >
+    //                 儲存模板
+    //               </Button>
+    //             </Space>
+    //           </Col>
+    //         </Row>
+    //       </Form>
+    //     </Card>
+    //   )
+    // },
     {
       key: 'logs',
       label: (
@@ -730,7 +730,7 @@ const EmailManagement = () => {
               showTotal: (total) => `共 ${total} 筆記錄`
             }}
             size="middle"
-            scroll={{ x: 1400 }}
+            scroll={{ x: 1200 }}
           />
         </Card>
       )
