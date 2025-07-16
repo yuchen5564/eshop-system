@@ -34,6 +34,7 @@ import {
   ReloadOutlined
 } from '@ant-design/icons';
 import couponService from '../../services/couponService';
+import categoryService from '../../services/categoryService';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -46,10 +47,12 @@ const CouponManagement = () => {
   const [editingCoupon, setEditingCoupon] = useState(null);
   const [form] = Form.useForm();
   const [stats, setStats] = useState({});
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     loadCoupons();
     loadStats();
+    loadCategories();
   }, []);
 
   const loadCoupons = async () => {
@@ -76,6 +79,19 @@ const CouponManagement = () => {
       }
     } catch (error) {
       console.error('載入統計資料失敗:', error);
+    }
+  };
+
+  const loadCategories = async () => {
+    try {
+      const result = await categoryService.getActiveCategories();
+      if (result.success) {
+      } else {
+        console.error('載入分類失敗:', result.error);
+      }
+      console.log('載入的分類:', result.data);
+    } catch (error) {
+      console.error('載入分類失敗:', error);
     }
   };
 
@@ -359,11 +375,10 @@ const CouponManagement = () => {
     }
   ];
 
-  const categoryOptions = [
-    { label: '蔬菜類', value: 'vegetable' },
-    { label: '水果類', value: 'fruit' },
-    { label: '穀物類', value: 'grain' }
-  ];
+  const categoryOptions = categories.map(category => ({
+    label: category.name,
+    value: category.id
+  }));
 
   return (
     <div style={{ padding: '24px' }}>
