@@ -18,6 +18,14 @@ class EmailService {
   }
 
   async sendOrderConfirmationEmail(orderData) {
+    const emailSettings = await this.getEmailSettings();
+    if (!emailSettings.success) {
+      throw new Error('無法獲取郵件設定');
+      console.log('無法獲取郵件設定，請檢查配置');
+    }
+    console.log('adminEmail:', emailSettings.adminEmail);
+    console.log(emailSettings)
+
     const customerEmail = {
       to: orderData.customerEmail,
       subject: `訂單確認 - ${orderData.id}`,
@@ -26,7 +34,7 @@ class EmailService {
     };
 
     const adminEmail = {
-      to: this.emailConfig.adminEmail,
+      to: emailSettings.data.adminEmail,
       subject: `新訂單通知 - ${orderData.id}`,
       html: this.generateNewOrderAdminTemplate(orderData),
       type: 'new_order_admin'
