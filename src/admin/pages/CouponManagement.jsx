@@ -92,10 +92,16 @@ const CouponManagement = () => {
         console.error('載入分類失敗:', result.error);
       }
       console.log('載入的分類:', result.data);
+      setCategories(result.data);
     } catch (error) {
       console.error('載入分類失敗:', error);
     }
   };
+
+  const categoryOptions = categories.map(category => ({
+    label: category.name,
+    value: category.id
+  }));
 
   const handleCreate = () => {
     setEditingCoupon(null);
@@ -377,10 +383,7 @@ const CouponManagement = () => {
     }
   ];
 
-  const categoryOptions = categories.map(category => ({
-    label: category.name,
-    value: category.id
-  }));
+
 
   return (
     <div style={{ padding: '24px' }}>
