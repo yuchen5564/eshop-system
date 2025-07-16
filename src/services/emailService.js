@@ -249,7 +249,7 @@ class EmailService {
       <body>
         <div class="container">
           <div class="header">
-            <h1>🚚 您的訂單已出貨</h1>
+            <h1>您的訂單已出貨</h1>
           </div>
           
           <div class="content">
@@ -257,14 +257,14 @@ class EmailService {
             <p>您的訂單 <strong>${orderData.id}</strong> 已經出貨囉！</p>
             
             <div class="shipping-info">
-              <h3>🏢 貨運資訊</h3>
+              <h3>貨運資訊</h3>
               <p><strong>貨運公司：</strong>${shippingInfo.carrier}</p>
               <p><strong>出貨時間：</strong>${new Date(shippingInfo.shippedDate).toLocaleString('zh-TW')}</p>
               <p><strong>預計送達：</strong>${shippingInfo.estimatedDelivery || '1-3個工作天'}</p>
             </div>
 
             <div class="tracking-box">
-              <h3>📦 貨運追蹤</h3>
+              <h3>貨運追蹤</h3>
               <p>追蹤編號</p>
               <div class="tracking-number">${shippingInfo.trackingNumber}</div>
               ${shippingInfo.trackingUrl ? `
@@ -278,13 +278,13 @@ class EmailService {
             </div>
 
             <div class="shipping-info">
-              <h3>📍 配送地址</h3>
+              <h3>配送地址</h3>
               <p>${orderData.shippingAddress}</p>
             </div>
 
             ${shippingInfo.notes ? `
               <div class="shipping-info">
-                <h3>💬 配送備註</h3>
+                <h3>配送備註</h3>
                 <p>${shippingInfo.notes}</p>
               </div>
             ` : ''}
