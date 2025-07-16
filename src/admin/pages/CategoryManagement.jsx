@@ -21,6 +21,7 @@ import {
   ReloadOutlined
 } from '@ant-design/icons';
 import categoryService from '../../services/categoryService';
+import EmojiPicker from '../../components/EmojiPicker';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -375,7 +376,7 @@ const CategoryManagement = () => {
               rules={[{ required: true, message: '請輸入類別圖示' }]}
               style={{ flex: 1 }}
             >
-              <Input placeholder="🥬 (使用 emoji)" />
+              <EmojiPicker placeholder="🥬 (使用 emoji)" />
             </Form.Item>
 
             <Form.Item

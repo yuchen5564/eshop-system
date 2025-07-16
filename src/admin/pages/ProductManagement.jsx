@@ -28,6 +28,7 @@ import {
 } from '@ant-design/icons';
 import productService from '../../services/productService';
 import categoryService from '../../services/categoryService';
+import EmojiPicker from '../../components/EmojiPicker';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -486,7 +487,7 @@ const ProductManagement = () => {
                 label="商品圖示"
                 rules={[{ required: true, message: '請輸入商品圖示' }]}
               >
-                <Input placeholder="請輸入emoji圖示" />
+                <EmojiPicker placeholder="請輸入emoji圖示" />
               </Form.Item>
             </Col>
           </Row>
