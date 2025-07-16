@@ -1,4 +1,6 @@
 import { emailManagementService, emailLogService } from './emailManagementService';
+import paymentService from './paymentService';
+import logisticsService from './logisticsService';
 
 class EmailService {
   constructor() {
@@ -6,6 +8,10 @@ class EmailService {
       adminEmail: 'admin@example.com',
       fromEmail: 'noreply@example.com'
     };
+    this.paymentMethodsCache = null;
+    this.lastCacheTime = 0;
+    this.logisticsMethodsCache = null;
+    this.logisticsLastCacheTime = 0;
   }
 
   // 獲取 Google App Script URL
@@ -18,29 +24,35 @@ class EmailService {
   }
 
   async sendOrderConfirmationEmail(orderData) {
-    const emailSettings = await this.getEmailSettings();
-    if (!emailSettings.success) {
-      throw new Error('無法獲取郵件設定');
-      console.log('無法獲取郵件設定，請檢查配置');
-    }
-    console.log('adminEmail:', emailSettings.adminEmail);
-    console.log(emailSettings)
-
-    const customerEmail = {
-      to: orderData.customerEmail,
-      subject: `訂單確認 - ${orderData.id}`,
-      html: this.generateOrderConfirmationTemplate(orderData),
-      type: 'order_confirmation'
-    };
-
-    const adminEmail = {
-      to: emailSettings.data.adminEmail,
-      subject: `新訂單通知 - ${orderData.id}`,
-      html: this.generateNewOrderAdminTemplate(orderData),
-      type: 'new_order_admin'
-    };
-
     try {
+      const emailSettings = await this.getEmailSettings();
+      if (!emailSettings.success) {
+        throw new Error('無法獲取郵件設定');
+      }
+
+      // 在郵件發送前先獲取付款方式顯示名稱
+      const paymentMethodText = await this.getPaymentMethodText(orderData.paymentMethod);
+      
+      // 創建包含付款方式名稱的訂單數據副本
+      const orderDataWithLabels = {
+        ...orderData,
+        paymentMethodText: paymentMethodText
+      };
+
+      const customerEmail = {
+        to: orderData.customerEmail,
+        subject: `訂單確認 - ${orderData.id}`,
+        html: this.generateOrderConfirmationTemplate(orderDataWithLabels),
+        type: 'order_confirmation'
+      };
+
+      const adminEmail = {
+        to: emailSettings.data.adminEmail,
+        subject: `新訂單通知 - ${orderData.id}`,
+        html: this.generateNewOrderAdminTemplate(orderDataWithLabels),
+        type: 'new_order_admin'
+      };
+
       await this.sendEmail(customerEmail);
       await this.sendEmail(adminEmail);
       console.log('訂單確認郵件已發送');
@@ -52,14 +64,30 @@ class EmailService {
   }
 
   async sendShippingNotificationEmail(orderData, shippingInfo) {
-    const email = {
-      to: orderData.customerEmail,
-      subject: `出貨通知 - ${orderData.id}`,
-      html: this.generateShippingNotificationTemplate(orderData, shippingInfo),
-      type: 'shipping_notification'
-    };
-
     try {
+      // 獲取物流公司名稱
+      const carrierName = await this.getCarrierName(shippingInfo.carrier);
+      
+      // 如果沒有提供預計送達時間，則使用物流方式的預設時間
+      let estimatedDelivery = shippingInfo.estimatedDelivery;
+      if (!estimatedDelivery && shippingInfo.shippingMethod) {
+        estimatedDelivery = await this.getEstimatedDeliveryTime(shippingInfo.shippingMethod);
+      }
+      
+      // 創建包含物流資訊的數據副本
+      const enhancedShippingInfo = {
+        ...shippingInfo,
+        carrierName: carrierName,
+        estimatedDelivery: estimatedDelivery || '1-3個工作天'
+      };
+
+      const email = {
+        to: orderData.customerEmail,
+        subject: `出貨通知 - ${orderData.id}`,
+        html: this.generateShippingNotificationTemplate(orderData, enhancedShippingInfo),
+        type: 'shipping_notification'
+      };
+
       await this.sendEmail(email);
       console.log('出貨通知郵件已發送');
       return { success: true, message: '出貨通知郵件發送成功' };
@@ -102,7 +130,7 @@ class EmailService {
               <h3>訂單資訊</h3>
               <p><strong>訂單編號：</strong>${orderData.id}</p>
               <p><strong>訂單時間：</strong>${new Date(orderData.orderDate).toLocaleString('zh-TW')}</p>
-              <p><strong>付款方式：</strong>${this.getPaymentMethodText(orderData.paymentMethod)}</p>
+              <p><strong>付款方式：</strong>${orderData.paymentMethodText || orderData.paymentMethod}</p>
             </div>
 
             <div class="order-info">
@@ -184,7 +212,7 @@ class EmailService {
               <p><strong>訂單時間：</strong>${new Date(orderData.orderDate).toLocaleString('zh-TW')}</p>
               <p><strong>訂單狀態：</strong>待處理</p>
               <p><strong>付款狀態：</strong>${this.getPaymentStatusText(orderData.paymentStatus)}</p>
-              <p><strong>付款方式：</strong>${this.getPaymentMethodText(orderData.paymentMethod)}</p>
+              <p><strong>付款方式：</strong>${orderData.paymentMethodText || orderData.paymentMethod}</p>
               <p><strong>訂單總額：</strong>NT$ ${orderData.total.toLocaleString()}</p>
             </div>
 
@@ -258,9 +286,9 @@ class EmailService {
             
             <div class="shipping-info">
               <h3>貨運資訊</h3>
-              <p><strong>貨運公司：</strong>${shippingInfo.carrier}</p>
+              <p><strong>貨運公司：</strong>${shippingInfo.carrierName || shippingInfo.carrier}</p>
               <p><strong>出貨時間：</strong>${new Date(shippingInfo.shippedDate).toLocaleString('zh-TW')}</p>
-              <p><strong>預計送達：</strong>${shippingInfo.estimatedDelivery || '1-3個工作天'}</p>
+              <p><strong>預計送達：</strong>${shippingInfo.estimatedDelivery}</p>
             </div>
 
             <div class="tracking-box">
@@ -302,15 +330,119 @@ class EmailService {
     `;
   }
 
-  getPaymentMethodText(method) {
-    const methods = {
-      'credit_card': '信用卡付款',
-      'bank_transfer': '銀行轉帳',
-      'cash_on_delivery': '貨到付款'
-    };
-    return methods[method] || method;
+  async getLogisticsMethodsData() {
+    const currentTime = Date.now();
+    // 檢查緩存是否過期（10分鐘有效期）
+    if (!this.logisticsMethodsCache || (currentTime - this.logisticsLastCacheTime > 600000)) {
+      try {
+        const result = await logisticsService.getAll();
+        if (result.success && Array.isArray(result.data)) {
+          this.logisticsMethodsCache = result.data;
+          this.logisticsLastCacheTime = currentTime;
+        } else {
+          console.warn('無法從 LogisticsService 獲取物流方式');
+        }
+      } catch (error) {
+        console.error('獲取物流方式資料失敗:', error);
+      }
+    }
+    return this.logisticsMethodsCache || [];
   }
 
+    async getCarrierName(carrierId) {
+    try {
+      // 從緩存或服務獲取物流方式數據
+      const logisticsMethods = await this.getLogisticsMethodsData();
+      
+      // 尋找匹配的物流方式
+      const method = logisticsMethods.find(m => m.carrier === carrierId);
+      if (method && method.carrierName) {
+        return method.carrierName;
+      }
+      
+      // 如果在 LogisticsService 中找不到，使用備用映射
+      const fallbackCarriers = {
+        'post_office': '中華郵政',
+        'fedex': 'FedEx',
+        'dhl': 'DHL',
+        'uber_eats': 'Uber Eats',
+        'self': '自取'
+      };
+      return fallbackCarriers[carrierId] || carrierId;
+    } catch (error) {
+      console.error('獲取物流公司名稱失敗:', error);
+      return carrierId; // 出現錯誤時返回原始值
+    }
+  }
+
+  async getEstimatedDeliveryTime(shippingMethodId) {
+    try {
+      // 從緩存或服務獲取物流方式數據
+      const logisticsMethods = await this.getLogisticsMethodsData();
+      
+      // 尋找匹配的物流方式
+      const method = logisticsMethods.find(m => m.id === shippingMethodId);
+      if (method && method.deliveryTime) {
+        return method.deliveryTime;
+      }
+      
+      return '1-3個工作天'; // 預設值
+    } catch (error) {
+      console.error('獲取預計送達時間失敗:', error);
+      return '1-3個工作天'; // 出現錯誤時返回預設值
+    }
+  }
+
+
+  async getPaymentMethodsData() {
+    const currentTime = Date.now();
+    // 檢查緩存是否過期（10分鐘有效期）
+    if (!this.paymentMethodsCache || (currentTime - this.lastCacheTime > 600000)) {
+      try {
+        const result = await paymentService.getAll();
+        if (result.success && Array.isArray(result.data)) {
+          this.paymentMethodsCache = result.data;
+          this.lastCacheTime = currentTime;
+        } else {
+          console.warn('無法從 PaymentService 獲取付款方式');
+        }
+      } catch (error) {
+        console.error('獲取付款方式資料失敗:', error);
+      }
+    }
+    return this.paymentMethodsCache || [];
+  }
+
+  async getPaymentMethodText(method) {
+    try {
+      // 從緩存或服務獲取付款方式數據
+      const paymentMethods = await this.getPaymentMethodsData();
+      
+      // 尋找匹配的付款方式
+      const paymentMethod = paymentMethods.find(pm => pm.id === method);
+      if (paymentMethod) {
+        return paymentMethod.name;
+      }
+      
+      // 如果在 PaymentService 中找不到，使用備用映射
+      const fallbackMethods = {
+        'credit_card': '信用卡付款',
+        'bank_transfer': '銀行轉帳',
+        'cash_on_delivery': '貨到付款'
+      };
+      return fallbackMethods[method] || method;
+    } catch (error) {
+      console.error('獲取付款方式名稱失敗:', error);
+      
+      // 出現錯誤時使用備用映射
+      const fallbackMethods = {
+        'credit_card': '信用卡付款',
+        'bank_transfer': '銀行轉帳',
+        'cash_on_delivery': '貨到付款'
+      };
+      return fallbackMethods[method] || method;
+    }
+  }
   getPaymentStatusText(status) {
     const statuses = {
       'pending': '待付款',
