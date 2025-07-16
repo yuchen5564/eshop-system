@@ -36,15 +36,6 @@ class EmailManagementService extends FirestoreService {
   async initializeDefaultEmailSettings() {
     const defaultSettings = {
       id: 'default_email_settings',
-      smtp: {
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
-        auth: {
-          user: '',
-          pass: ''
-        }
-      },
       sender: {
         name: '農鮮市集',
         email: 'noreply@farmfresh.com'
@@ -94,6 +85,10 @@ class EmailManagementService extends FirestoreService {
         dailyLimit: 1000,
         hourlyLimit: 100,
         retryAttempts: 3
+      },
+      googleAppScript: {
+        enabled: true,
+        description: 'Google App Script 郵件發送服務'
       },
       isActive: true
     };
@@ -271,15 +266,94 @@ class EmailLogService extends FirestoreService {
     super('email_logs');
   }
 
+  // 獲取最近的郵件記錄
+  async getRecentLogs(limit = 100) {
+    try {
+      const result = await this.getAll();
+      if (!result.success) {
+        return result;
+      }
+
+      // 按發送時間排序，最新的在前
+      const sortedLogs = result.data.sort((a, b) => {
+        const dateA = a.sentAt.seconds ? new Date(a.sentAt.seconds * 1000) : new Date(a.sentAt);
+        const dateB = b.sentAt.seconds ? new Date(b.sentAt.seconds * 1000) : new Date(b.sentAt);
+        return dateB.getTime() - dateA.getTime();
+      });
+
+      return {
+        success: true,
+        data: sortedLogs.slice(0, limit)
+      };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  // 按類型統計
+  groupByType(logs) {
+    const typeStats = {};
+    logs.forEach(log => {
+      const type = log.type || 'general';
+      if (!typeStats[type]) {
+        typeStats[type] = { sent: 0, failed: 0, total: 0 };
+      }
+      typeStats[type].total++;
+      if (log.status === 'sent' || log.status === 'delivered') {
+        typeStats[type].sent++;
+      } else if (log.status === 'failed' || log.status === 'error') {
+        typeStats[type].failed++;
+      }
+    });
+    return typeStats;
+  }
+
+  // 按日統計
+  groupByDay(logs, days) {
+    const dayStats = {};
+    const today = new Date();
+    
+    // 初始化日期範圍
+    for (let i = 0; i < days; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      dayStats[dateStr] = { sent: 0, failed: 0, total: 0 };
+    }
+    
+    // 統計每日數據
+    logs.forEach(log => {
+      const logDate = log.sentAt.seconds ? new Date(log.sentAt.seconds * 1000) : new Date(log.sentAt);
+      const dateStr = logDate.toISOString().split('T')[0];
+      
+      if (dayStats[dateStr]) {
+        dayStats[dateStr].total++;
+        if (log.status === 'sent' || log.status === 'delivered') {
+          dayStats[dateStr].sent++;
+        } else if (log.status === 'failed' || log.status === 'error') {
+          dayStats[dateStr].failed++;
+        }
+      }
+    });
+    
+    return dayStats;
+  }
+
   // 記錄郵件發送
   async logEmail(emailData) {
     const logData = {
-      to: emailData.to,
-      from: emailData.from,
-      subject: emailData.subject,
-      template: emailData.template,
-      status: emailData.status,
+      to: emailData.to || '',
+      from: emailData.from || '',
+      subject: emailData.subject || '',
+      template: emailData.template || 'general',
+      type: emailData.type || 'general',
+      status: emailData.status || 'unknown',
       sentAt: new Date(),
+      messageId: emailData.messageId || null,
+      method: emailData.method || 'google_app_script',
+      attempts: emailData.attempts || 1,
+      orderId: emailData.orderId || null,
+      userId: emailData.userId || null,
       errorMessage: emailData.errorMessage || null
     };
 

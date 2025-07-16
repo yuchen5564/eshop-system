@@ -15,7 +15,8 @@ import {
   Table,
   Modal,
   Alert,
-  Tag
+  Tag,
+  Statistic
 } from 'antd';
 import {
   MailOutlined,
@@ -23,25 +24,32 @@ import {
   SendOutlined,
   EyeOutlined,
   SaveOutlined,
-  FileTextOutlined
+  FileTextOutlined,
+  GoogleOutlined,
+  CheckCircleOutlined,
+  ExclamationCircleOutlined,
+  ReloadOutlined
 } from '@ant-design/icons';
 import { emailManagementService, emailTemplateService, emailLogService } from '../../services/emailManagementService';
+import { emailService } from '../../services/emailService';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
 const EmailManagement = () => {
-  const [activeTab, setActiveTab] = useState('templates');
+  const [activeTab, setActiveTab] = useState('config');
   const [templateForm] = Form.useForm();
   const [configForm] = Form.useForm();
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewContent, setPreviewContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailLogs, setEmailLogs] = useState([]);
+  const [emailStats, setEmailStats] = useState({});
 
   useEffect(() => {
     loadEmailLogs();
     loadEmailSettings();
+    loadEmailStats();
   }, []);
 
   const loadEmailSettings = async () => {
@@ -51,17 +59,13 @@ const EmailManagement = () => {
         const settings = result.data;
         // 轉換資料庫格式為表單格式
         const formData = {
-          smtpHost: settings.smtp?.host || '',
-          smtpPort: settings.smtp?.port || 587,
-          smtpSecure: settings.smtp?.secure || false,
-          smtpUser: settings.smtp?.auth?.user || '',
-          smtpPass: settings.smtp?.auth?.pass || '',
           fromName: settings.sender?.name || '',
           fromEmail: settings.sender?.email || '',
           adminEmail: settings.adminEmail || '',
           enabled: settings.isActive || false
         };
         setEmailConfig(formData);
+        configForm.setFieldsValue(formData);
       }
     } catch (error) {
       console.error('載入郵件設定失敗:', error);
@@ -70,12 +74,23 @@ const EmailManagement = () => {
 
   const loadEmailLogs = async () => {
     try {
-      const result = await emailLogService.getAll();
+      const result = await emailLogService.getRecentLogs(100);
       if (result.success) {
         setEmailLogs(result.data);
       }
     } catch (error) {
       console.error('載入郵件記錄失敗:', error);
+    }
+  };
+
+  const loadEmailStats = async () => {
+    try {
+      const result = await emailLogService.getEmailStats(30);
+      if (result.success) {
+        setEmailStats(result.data);
+      }
+    } catch (error) {
+      console.error('載入郵件統計失敗:', error);
     }
   };
 
@@ -131,11 +146,6 @@ const EmailManagement = () => {
     adminEmail: 'admin@example.com',
     fromEmail: 'noreply@example.com',
     fromName: '農鮮市集',
-    smtpHost: 'smtp.example.com',
-    smtpPort: 587,
-    smtpSecure: false,
-    smtpUser: '',
-    smtpPass: '',
     enabled: true
   });
 
@@ -189,6 +199,86 @@ const EmailManagement = () => {
           </Button>
         </Space>
       )
+    }
+  ];
+
+  const logColumns = [
+    {
+      title: '時間',
+      dataIndex: 'sentAt',
+      key: 'sentAt',
+      width: 150,
+      render: (sentAt) => {
+        const date = sentAt.seconds ? new Date(sentAt.seconds * 1000) : new Date(sentAt);
+        return date.toLocaleString('zh-TW');
+      }
+    },
+    {
+      title: '寄件人',
+      dataIndex: 'from',
+      key: 'from',
+      width: 200,
+      render: (from) => from || '系統'
+    },
+    {
+      title: '收件人',
+      dataIndex: 'to',
+      key: 'to',
+      width: 200
+    },
+    {
+      title: '主旨',
+      dataIndex: 'subject',
+      key: 'subject',
+      ellipsis: true
+    },
+    {
+      title: '類型',
+      dataIndex: 'type',
+      key: 'type',
+      width: 100,
+      render: (type) => {
+        const typeMap = {
+          'order_confirmation': { text: '訂單確認', color: 'blue' },
+          'shipping_notification': { text: '出貨通知', color: 'green' },
+          'new_order_admin': { text: '新訂單', color: 'orange' },
+          'test': { text: '測試', color: 'purple' }
+        };
+        const info = typeMap[type] || { text: type || 'general', color: 'default' };
+        return <Tag color={info.color}>{info.text}</Tag>;
+      }
+    },
+    {
+      title: '狀態',
+      dataIndex: 'status',
+      key: 'status',
+      width: 80,
+      render: (status) => {
+        const statusMap = {
+          'sent': { text: '已送達', color: 'green', icon: <CheckCircleOutlined /> },
+          'delivered': { text: '已送達', color: 'green', icon: <CheckCircleOutlined /> },
+          'failed': { text: '失敗', color: 'red', icon: <ExclamationCircleOutlined /> },
+          'error': { text: '錯誤', color: 'red', icon: <ExclamationCircleOutlined /> },
+          'pending': { text: '發送中', color: 'orange' },
+          'skipped': { text: '已跳過', color: 'gray' }
+        };
+        const info = statusMap[status] || { text: status, color: 'default' };
+        return <Tag color={info.color} icon={info.icon}>{info.text}</Tag>;
+      }
+    },
+    {
+      title: '訊息ID',
+      dataIndex: 'messageId',
+      key: 'messageId',
+      width: 150,
+      render: (messageId) => messageId ? <Text code>{messageId.substring(0, 10)}...</Text> : '-'
+    },
+    {
+      title: '錯誤訊息',
+      dataIndex: 'errorMessage',
+      key: 'errorMessage',
+      width: 200,
+      render: (error) => error ? <Text type="danger" ellipsis>{error}</Text> : '-'
     }
   ];
 
@@ -271,20 +361,15 @@ const EmailManagement = () => {
     try {
       // 轉換表單數據為資料庫格式
       const settingsData = {
-        smtp: {
-          host: values.smtpHost,
-          port: values.smtpPort,
-          secure: values.smtpSecure,
-          auth: {
-            user: values.smtpUser,
-            pass: values.smtpPass
-          }
-        },
         sender: {
           name: values.fromName,
           email: values.fromEmail
         },
         adminEmail: values.adminEmail,
+        googleAppScript: {
+          enabled: true,
+          description: 'Google App Script 郵件發送服務'
+        },
         isActive: values.enabled
       };
       
@@ -305,19 +390,145 @@ const EmailManagement = () => {
   };
 
   const testEmailConnection = async () => {
+    const testEmail = configForm.getFieldValue('adminEmail');
+    if (!testEmail) {
+      message.error('請先輸入管理員信箱');
+      return;
+    }
+
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      message.success('郵件伺服器連線測試成功');
+      const result = await emailService.testEmailSending(testEmail);
+      if (result.success) {
+        message.success('測試郵件發送成功，請檢查信箱');
+        // 重新載入記錄
+        setTimeout(() => {
+          loadEmailLogs();
+          loadEmailStats();
+        }, 1000);
+      } else {
+        message.error('測試郵件發送失敗: ' + result.message);
+      }
     } catch (error) {
-      message.error('郵件伺服器連線測試失敗');
+      message.error('測試郵件發送失敗: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-
   const tabItems = [
+    {
+      key: 'config',
+      label: (
+        <span>
+          <SettingOutlined />
+          郵件設定
+        </span>
+      ),
+      children: (
+        <Card>
+          <Title level={4}>郵件系統設定</Title>
+          <Paragraph type="secondary">
+            系統使用 Google App Script 發送郵件，請確保已正確設定環境變數 VITE_GOOGLE_APP_SCRIPT_ID。
+          </Paragraph>
+          
+          <Form
+            form={configForm}
+            layout="vertical"
+            initialValues={emailConfig}
+            onFinish={handleSaveConfig}
+          >
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="fromName"
+                  label="寄件者名稱"
+                  rules={[{ required: true, message: '請輸入寄件者名稱' }]}
+                >
+                  <Input placeholder="請輸入寄件者名稱" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="fromEmail"
+                  label="寄件者信箱"
+                  rules={[
+                    { required: true, message: '請輸入寄件者信箱' },
+                    { type: 'email', message: '請輸入正確的信箱格式' }
+                  ]}
+                >
+                  <Input placeholder="請輸入寄件者信箱" />
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Form.Item
+              name="adminEmail"
+              label="管理員信箱"
+              rules={[
+                { required: true, message: '請輸入管理員信箱' },
+                { type: 'email', message: '請輸入正確的信箱格式' }
+              ]}
+            >
+              <Input placeholder="請輸入管理員信箱" />
+            </Form.Item>
+
+            <Divider />
+
+            <Alert
+              message="Google App Script 設定說明"
+              description={
+                <div>
+                  <p>1. 請確保您的 Google App Script 已部署為 Web App</p>
+                  <p>2. 設定執行身份為您的 Google 帳戶</p>
+                  <p>3. 設定存取權限允許外部訪問</p>
+                  <p>4. 在 .env 文件中設定 VITE_GOOGLE_APP_SCRIPT_ID 為您的 Script ID</p>
+                  <p>5. 當前 Script ID: <Text code>{import.meta.env.VITE_GOOGLE_APP_SCRIPT_ID || '未設定'}</Text></p>
+                </div>
+              }
+              type="info"
+              showIcon
+              style={{ marginBottom: '16px' }}
+            />
+
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="enabled"
+                  label="啟用郵件功能"
+                  valuePropName="checked"
+                >
+                  <Switch 
+                    checkedChildren="啟用" 
+                    unCheckedChildren="停用"
+                    size="default"
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+                  <Button
+                    icon={<SendOutlined />}
+                    loading={loading}
+                    onClick={testEmailConnection}
+                  >
+                    測試郵件發送
+                  </Button>
+                  <Button
+                    type="primary"
+                    icon={<SaveOutlined />}
+                    htmlType="submit"
+                    loading={loading}
+                  >
+                    儲存設定
+                  </Button>
+                </Space>
+              </Col>
+            </Row>
+          </Form>
+        </Card>
+      )
+    },
     {
       key: 'templates',
       label: (
@@ -448,146 +659,6 @@ const EmailManagement = () => {
       )
     },
     {
-      key: 'config',
-      label: (
-        <span>
-          <SettingOutlined />
-          郵件設定
-        </span>
-      ),
-      children: (
-        <Card>
-          <Title level={4}>郵件伺服器設定</Title>
-          
-          <Form
-            form={configForm}
-            layout="vertical"
-            initialValues={emailConfig}
-            onFinish={handleSaveConfig}
-          >
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="fromName"
-                  label="寄件者名稱"
-                  rules={[{ required: true, message: '請輸入寄件者名稱' }]}
-                >
-                  <Input placeholder="請輸入寄件者名稱" />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="fromEmail"
-                  label="寄件者信箱"
-                  rules={[
-                    { required: true, message: '請輸入寄件者信箱' },
-                    { type: 'email', message: '請輸入正確的信箱格式' }
-                  ]}
-                >
-                  <Input placeholder="請輸入寄件者信箱" />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Form.Item
-              name="adminEmail"
-              label="管理員信箱"
-              rules={[
-                { required: true, message: '請輸入管理員信箱' },
-                { type: 'email', message: '請輸入正確的信箱格式' }
-              ]}
-            >
-              <Input placeholder="請輸入管理員信箱" />
-            </Form.Item>
-
-            <Divider />
-
-            <Title level={5}>SMTP 設定</Title>
-            
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="smtpHost"
-                  label="SMTP 伺服器"
-                  rules={[{ required: true, message: '請輸入SMTP伺服器' }]}
-                >
-                  <Input placeholder="例如：smtp.gmail.com" />
-                </Form.Item>
-              </Col>
-              <Col span={6}>
-                <Form.Item
-                  name="smtpPort"
-                  label="連接埠"
-                  rules={[{ required: true, message: '請輸入連接埠' }]}
-                >
-                  <Input placeholder="587" type="number" />
-                </Form.Item>
-              </Col>
-              <Col span={6}>
-                <Form.Item
-                  name="smtpSecure"
-                  label="使用SSL"
-                  valuePropName="checked"
-                >
-                  <Switch checkedChildren="是" unCheckedChildren="否" />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="smtpUser"
-                  label="SMTP 使用者名稱"
-                >
-                  <Input placeholder="請輸入SMTP使用者名稱" />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="smtpPass"
-                  label="SMTP 密碼"
-                >
-                  <Input.Password placeholder="請輸入SMTP密碼" />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item
-                  name="enabled"
-                  label="啟用郵件功能"
-                  valuePropName="checked"
-                >
-                  <Switch checkedChildren="啟用" unCheckedChildren="停用" />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                  <Button
-                    icon={<SendOutlined />}
-                    loading={loading}
-                    onClick={testEmailConnection}
-                  >
-                    測試連線
-                  </Button>
-                  <Button
-                    type="primary"
-                    icon={<SaveOutlined />}
-                    htmlType="submit"
-                    loading={loading}
-                  >
-                    儲存設定
-                  </Button>
-                </Space>
-              </Col>
-            </Row>
-          </Form>
-        </Card>
-      )
-    },
-    {
       key: 'logs',
       label: (
         <span>
@@ -597,84 +668,69 @@ const EmailManagement = () => {
       ),
       children: (
         <Card>
-          <Title level={4}>發送記錄</Title>
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Title level={4}>郵件發送記錄</Title>
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={() => {
+                  loadEmailLogs();
+                }}
+              >
+                刷新
+              </Button>
+            </div>
+            
+            {/* 統計資訊 */}
+            {/* {emailStats.total && (
+              <Row gutter={16} style={{ marginBottom: '16px' }}>
+                <Col span={6}>
+                  <Statistic
+                    title="總發送量"
+                    value={emailStats.total}
+                    prefix={<MailOutlined />}
+                  />
+                </Col>
+                <Col span={6}>
+                  <Statistic
+                    title="成功"
+                    value={emailStats.successful}
+                    valueStyle={{ color: '#3f8600' }}
+                    prefix={<CheckCircleOutlined />}
+                  />
+                </Col>
+                <Col span={6}>
+                  <Statistic
+                    title="失敗"
+                    value={emailStats.failed}
+                    valueStyle={{ color: '#cf1322' }}
+                    prefix={<ExclamationCircleOutlined />}
+                  />
+                </Col>
+                <Col span={6}>
+                  <Statistic
+                    title="成功率"
+                    value={emailStats.total ? ((emailStats.successful / emailStats.total) * 100).toFixed(1) : 0}
+                    suffix="%"
+                    precision={1}
+                  />
+                </Col>
+              </Row>
+            )} */}
+          </div>
+          
           <Table
-            columns={[
-              {
-                title: '郵件類型',
-                dataIndex: 'type',
-                key: 'type',
-                width: 120,
-                render: (type) => {
-                  const typeMap = {
-                    'order_confirmation': { text: '訂單確認', color: 'blue' },
-                    'shipping_notification': { text: '出貨通知', color: 'green' }
-                  };
-                  const info = typeMap[type] || { text: type, color: 'default' };
-                  return <Tag color={info.color}>{info.text}</Tag>;
-                }
-              },
-              {
-                title: '收件人',
-                dataIndex: 'recipientName',
-                key: 'recipientName',
-                width: 120
-              },
-              {
-                title: '信箱',
-                dataIndex: 'recipient',
-                key: 'recipient',
-                width: 200
-              },
-              {
-                title: '主旨',
-                dataIndex: 'subject',
-                key: 'subject'
-              },
-              {
-                title: '關聯訂單',
-                dataIndex: 'orderId',
-                key: 'orderId',
-                width: 120
-              },
-              {
-                title: '發送時間',
-                dataIndex: 'sentAt',
-                key: 'sentAt',
-                width: 150,
-                render: (date) => date ? new Date(date).toLocaleString('zh-TW') : '-'
-              },
-              {
-                title: '狀態',
-                dataIndex: 'status',
-                key: 'status',
-                width: 100,
-                render: (status) => {
-                  const statusMap = {
-                    'delivered': { text: '已送達', color: 'green' },
-                    'failed': { text: '失敗', color: 'red' },
-                    'pending': { text: '發送中', color: 'orange' }
-                  };
-                  const info = statusMap[status] || { text: status, color: 'default' };
-                  return <Tag color={info.color}>{info.text}</Tag>;
-                }
-              },
-              {
-                title: '錯誤訊息',
-                dataIndex: 'errorMessage',
-                key: 'errorMessage',
-                width: 150,
-                render: (error) => error ? <Text type="danger">{error}</Text> : '-'
-              }
-            ]}
+            columns={logColumns}
             dataSource={emailLogs}
             rowKey="id"
             pagination={{
-              pageSize: 10,
+              pageSize: 20,
               showSizeChanger: true,
+              showQuickJumper: true,
               showTotal: (total) => `共 ${total} 筆記錄`
             }}
             size="middle"
+            scroll={{ x: 1400 }}
           />
         </Card>
       )
@@ -685,6 +741,7 @@ const EmailManagement = () => {
     <div style={{ padding: '24px' }}>
       <div style={{ marginBottom: '24px' }}>
         <Title level={3} style={{ margin: 0 }}>郵件管理</Title>
+        <Text type="secondary">使用 Google App Script 發送郵件</Text>
       </div>
       
       <Tabs

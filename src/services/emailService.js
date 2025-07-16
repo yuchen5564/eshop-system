@@ -1,16 +1,20 @@
+import { emailManagementService, emailLogService } from './emailManagementService';
+
 class EmailService {
   constructor() {
     this.emailConfig = {
       adminEmail: 'admin@example.com',
-      fromEmail: 'noreply@example.com',
-      smtpSettings: {
-        host: 'smtp.example.com',
-        port: 587,
-        secure: false,
-        user: '',
-        pass: ''
-      }
+      fromEmail: 'noreply@example.com'
     };
+  }
+
+  // 獲取 Google App Script URL
+  getGoogleAppScriptUrl() {
+    const scriptId = import.meta.env.VITE_GOOGLE_APP_SCRIPT_ID;
+    if (!scriptId) {
+      throw new Error('Google App Script ID 未設定，請在 .env 文件中設定 VITE_GOOGLE_APP_SCRIPT_ID');
+    }
+    return `https://script.google.com/macros/s/${scriptId}/exec`;
   }
 
   async sendOrderConfirmationEmail(orderData) {
@@ -310,18 +314,198 @@ class EmailService {
   }
 
   async sendEmail(emailData) {
-    console.log(`模擬發送郵件到 ${emailData.to}:`, emailData.subject);
+    let logData = {
+      to: emailData.to,
+      subject: emailData.subject,
+      template: emailData.template || 'general',
+      type: emailData.type || 'general',
+      orderId: emailData.orderId,
+      userId: emailData.userId,
+      status: 'pending',
+      attempts: 0,
+      method: 'google_app_script'
+    };
+
+    try {
+      // 檢查郵件功能是否啟用
+      const isEnabled = await this.isEmailEnabled();
+      if (!isEnabled) {
+        console.log('郵件功能已停用，跳過發送');
+        logData.status = 'skipped';
+        logData.errorMessage = '郵件功能已停用';
+        logData.from = 'system';
+        await emailLogService.logEmail(logData);
+        return { success: false, message: '郵件功能已停用', skipped: true };
+      }
+
+      // 獲取郵件設定
+      const emailSettings = await this.getEmailSettings();
+      if (!emailSettings.success) {
+        throw new Error('無法獲取郵件設定');
+      }
+
+      logData.from = emailSettings.data.sender?.email || this.emailConfig.fromEmail;
+
+      // 使用Google App Script發送
+      const result = await this.sendViaGoogleAppScript(emailData, emailSettings.data);
+      
+      // 更新記錄狀態
+      logData.status = result.success ? 'sent' : 'failed';
+      logData.messageId = result.messageId;
+      logData.attempts = result.attempts || 1;
+      logData.errorMessage = result.success ? null : result.error;
+      logData.from = emailSettings.data.sender?.email || this.emailConfig.fromEmail;
+      
+      await emailLogService.logEmail(logData);
+      
+      return result;
+    } catch (error) {
+      console.error('郵件發送失敗:', error);
+      logData.status = 'failed';
+      logData.errorMessage = error.message;
+      logData.from = 'system';
+      await emailLogService.logEmail(logData);
+      return { success: false, message: '郵件發送失敗', error: error.message };
+    }
+  }
+
+  async sendViaGoogleAppScript(emailData, emailSettings) {
+    const scriptId = import.meta.env.VITE_GOOGLE_APP_SCRIPT_ID;
     
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const success = Math.random() > 0.1;
-        if (success) {
-          resolve({ messageId: `msg_${Date.now()}`, status: 'sent' });
-        } else {
-          reject(new Error('郵件發送失敗'));
+    if (!scriptId) {
+      throw new Error('Google App Script ID 未設定');
+    }
+    
+    try {
+      const payload = {
+        to: emailData.to,
+        subject: emailData.subject,
+        htmlContent: emailData.html || '',
+        textContent: emailData.text || '',
+        from: {
+          email: emailSettings.sender?.email || this.emailConfig.fromEmail,
+          name: emailSettings.sender?.name || '農鮮市集'
+        },
+        type: emailData.type || 'general',
+        metadata: {
+          orderId: emailData.orderId,
+          userId: emailData.userId,
+          timestamp: new Date().toISOString()
         }
-      }, 1000);
+      };
+
+      // 使用 JSONP 方式調用
+      const result = await this.sendViaJsonp(scriptId, payload);
+      
+      console.log(`郵件已通過Google App Script發送到 ${emailData.to}:`, emailData.subject);
+      return { 
+        success: true, 
+        messageId: result.messageId || `gas_${Date.now()}`, 
+        status: 'sent',
+        method: 'google_app_script',
+        attempts: 1
+      };
+      
+    } catch (error) {
+      console.error('Google App Script 郵件發送失敗:', error);
+      return { 
+        success: false, 
+        message: '郵件發送失敗', 
+        error: error.message,
+        method: 'google_app_script'
+      };
+    }
+  }
+
+  // 使用 JSONP 方式調用 Google App Script
+  async sendViaJsonp(scriptId, payload) {
+    return new Promise((resolve, reject) => {
+      const callbackName = `emailCallback_${Date.now()}`;
+      const timeoutId = setTimeout(() => {
+        cleanup();
+        reject(new Error('請求超時'));
+      }, 30000); // 30秒超時
+      
+      const cleanup = () => {
+        if (window[callbackName]) {
+          delete window[callbackName];
+        }
+        clearTimeout(timeoutId);
+        const script = document.getElementById(callbackName);
+        if (script) {
+          document.head.removeChild(script);
+        }
+      };
+      
+      // 設定回調函數
+      window[callbackName] = (response) => {
+        cleanup();
+        if (response.success) {
+          resolve(response);
+        } else {
+          reject(new Error(response.message || '郵件發送失敗'));
+        }
+      };
+      
+      // 創建 JSONP 腳本
+      const script = document.createElement('script');
+      script.id = callbackName;
+      
+      const params = new URLSearchParams({
+        callback: callbackName,
+        payload: JSON.stringify(payload)
+      });
+      
+      script.src = `https://script.google.com/macros/s/${scriptId}/exec?${params.toString()}`;
+      
+      script.onerror = () => {
+        cleanup();
+        reject(new Error('腳本載入失敗'));
+      };
+      
+      document.head.appendChild(script);
     });
+  }
+
+  // 測試郵件發送功能
+  async testEmailSending(testEmail) {
+    const testData = {
+      to: testEmail,
+      subject: '測試郵件 - 農鮮市集郵件系統',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #52c41a;">🌱 郵件系統測試成功</h2>
+          <p>恭喜！您的農鮮市集郵件系統已正常運作。</p>
+          <div style="background: #f9f9f9; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p><strong>測試時間：</strong>${new Date().toLocaleString('zh-TW')}</p>
+            <p><strong>發送方式：</strong>Google App Script</p>
+          </div>
+          <p style="color: #666;">此為系統自動發送的測試郵件，請勿直接回覆。</p>
+        </div>
+      `,
+      text: `郵件系統測試成功\n\n恭喜！您的農鮮市集郵件系統已正常運作。\n\n測試時間：${new Date().toLocaleString('zh-TW')}\n發送方式：Google App Script\n\n此為系統自動發送的測試郵件，請勿直接回覆。`,
+      type: 'test'
+    };
+
+    return await this.sendEmail(testData);
+  }
+
+  async isEmailEnabled() {
+    try {
+      const settings = await emailManagementService.getEmailSettings();
+      return settings.success && settings.data?.isActive;
+    } catch (error) {
+      console.error('檢查郵件功能狀態失敗:', error);
+      return false;
+    }
+  }
+
+  async getEmailSettings() {
+    try {
+      return await emailManagementService.getEmailSettings();
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
   }
 
   updateEmailConfig(config) {
