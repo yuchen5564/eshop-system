@@ -661,6 +661,7 @@ const OrderManagement = () => {
             showQuickJumper: true,
             showTotal: (total) => `共 ${total} 筆訂單`
           }}
+          scroll={{ x: 1200 }}
         />
       </Card>
 

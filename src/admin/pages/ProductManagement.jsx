@@ -367,6 +367,7 @@ const ProductManagement = () => {
             showQuickJumper: true,
             showTotal: (total) => `共 ${total} 個商品`
           }}
+          scroll={{ x: 1200 }}
         />
       </Card>
 

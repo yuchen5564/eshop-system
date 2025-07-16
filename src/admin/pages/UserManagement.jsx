@@ -388,6 +388,7 @@ const UserManagement = () => {
             showTotal: (total, range) => `顯示 ${range[0]}-${range[1]} 項，共 ${total} 項`
           }}
           size="middle"
+          scroll={{ x: 1200 }}
         />
       </Card>
 

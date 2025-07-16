@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Layout, message } from 'antd';
-import Header from './components/Header';
+import ResponsiveHeader from './components/ui/ResponsiveHeader';
 import Footer from './components/Footer';
+import MobileBottomNavigation from './components/mobile/MobileBottomNavigation';
 import HomePage from './pages/HomePage';
 import ProductsPage from './pages/ProductsPage';
 import CartPage from './pages/CartPage';
@@ -12,6 +13,7 @@ import AlertNotification, { useAlerts } from './components/AlertNotification';
 import LoginForm from './components/LoginForm';
 import SystemInitPage from './components/SystemInitPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { useResponsive } from './hooks/useBreakpoint';
 import productService from './services/productService';
 import categoryService from './services/categoryService';
 import systemService from './services/systemService';
@@ -33,6 +35,7 @@ const FarmEcommerce = () => {
   const [showLoginForm, setShowLoginForm] = useState(false);
   const { alerts, addSuccessAlert, addRemoveAlert, removeAlert } = useAlerts();
   const { user, isAdminUser, loading: authLoading } = useAuth();
+  const { isMobile } = useResponsive();
 
   useEffect(() => {
     if (!authLoading) {
@@ -250,7 +253,7 @@ const FarmEcommerce = () => {
         onRemoveAlert={removeAlert} 
       />
       
-      <Header 
+      <ResponsiveHeader 
         searchTerm={searchTerm}
         onSearchChange={handleSearchChange}
         currentPage={currentPage}
@@ -261,7 +264,11 @@ const FarmEcommerce = () => {
         getTotalPrice={getTotalPrice}
       />
 
-      <Content style={{ width: '100%', overflow: 'hidden' }}>
+      <Content style={{ 
+        width: '100%', 
+        overflow: 'hidden',
+        paddingBottom: isMobile ? '80px' : '0' // 為移動端底部導航留空間
+      }}>
         {currentPage === 'home' && (
           <HomePage 
             products={products}
@@ -304,7 +311,16 @@ const FarmEcommerce = () => {
         )}
       </Content>
 
-      <Footer />
+      {/* 桌面端顯示Footer，移動端顯示底部導航 */}
+      {isMobile ? (
+        <MobileBottomNavigation
+          currentPage={currentPage}
+          onPageChange={handlePageChange}
+          cartItemsCount={getTotalItems()}
+        />
+      ) : (
+        <Footer />
+      )}
     </Layout>
   );
 };

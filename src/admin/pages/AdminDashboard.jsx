@@ -319,6 +319,7 @@ const AdminDashboard = () => {
               pagination={false}
               size="small"
               loading={loading}
+              scroll={{ x: 1200 }}
             />
           </Card>
         </Col>

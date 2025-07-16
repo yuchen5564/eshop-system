@@ -1,0 +1,1 @@
+export { default as MobileDataCard, renderUserCard, renderProductCard } from './MobileDataCard';

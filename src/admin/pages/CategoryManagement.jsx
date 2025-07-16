@@ -312,6 +312,7 @@ const CategoryManagement = () => {
             showSizeChanger: true,
             showTotal: (total) => `共 ${total} 個類別`
           }}
+          scroll={{ x: 1200 }}
         />
       </Card>
 

@@ -310,6 +310,7 @@ const LogisticsManagement = () => {
             showTotal: (total) => `共 ${total} 個物流方法`
           }}
           size="middle"
+          scroll={{ x: 1200 }}
         />
       </Card>
 

@@ -343,6 +343,7 @@ const EmailManagement = () => {
             }))}
             pagination={false}
             size="middle"
+            scroll={{ x: 1200 }}
           />
         </Card>
       )

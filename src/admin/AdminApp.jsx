@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminHeader from './components/AdminHeader';
 import AdminSidebar from './components/AdminSidebar';
 import { AdminLayout } from './components/ui';
@@ -13,10 +13,17 @@ import LogisticsManagement from './pages/LogisticsManagement';
 import UserManagement from './pages/UserManagement';
 import SystemSettings from './pages/SystemSettings';
 import { EmptyState } from '../components/common';
+import { useResponsive } from '../hooks/useBreakpoint';
 
 const AdminApp = ({ onBackToSite }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedMenu, setSelectedMenu] = useState('dashboard');
+  const { isMobile } = useResponsive();
+
+  // 在移動端預設收合側邊欄
+  useEffect(() => {
+    setCollapsed(isMobile);
+  }, [isMobile]);
 
   const toggleCollapse = () => {
     setCollapsed(!collapsed);
@@ -24,6 +31,11 @@ const AdminApp = ({ onBackToSite }) => {
 
   const handleMenuSelect = (key) => {
     setSelectedMenu(key);
+    
+    // 在移動端選擇選單項目後自動收合側邊欄
+    if (isMobile) {
+      setCollapsed(true);
+    }
   };
 
   const renderContent = () => {
@@ -64,6 +76,7 @@ const AdminApp = ({ onBackToSite }) => {
   return (
     <AdminLayout
       collapsed={collapsed}
+      onCollapse={setCollapsed}
       header={
         <AdminHeader 
           collapsed={collapsed} 

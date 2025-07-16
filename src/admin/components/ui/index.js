@@ -6,3 +6,4 @@ export { default as BackToSiteButton } from './BackToSiteButton';
 export { default as AdminTable } from './AdminTable';
 export { default as AdminCard } from './AdminCard';
 export { default as StatusTag } from './StatusTag';
+export { default as ResponsiveDataDisplay } from './ResponsiveDataDisplay';
