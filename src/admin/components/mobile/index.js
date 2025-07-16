@@ -1,1 +1,1 @@
-export { default as MobileDataCard, renderUserCard, renderProductCard } from './MobileDataCard';
+// MobileDataCard removed - using horizontal scroll tables instead
