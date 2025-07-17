@@ -249,11 +249,8 @@ const OrderTrackingPage = () => {
                 {orderData.createdAt ? new Date(orderData.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}
               </Descriptions.Item>
               <Descriptions.Item label="訂單金額">NT$ {(orderData.total || 0).toLocaleString()}</Descriptions.Item>
-              <Descriptions.Item label="付款方式">
+              <Descriptions.Item label="付款方式" span={4}>
                 {getPaymentMethodLabel(orderData.paymentMethod) || 'N/A'}
-              </Descriptions.Item>
-              <Descriptions.Item label="運費">
-                NT$ {orderData.shippingFee ? orderData.shippingFee : '100'}
               </Descriptions.Item>
               <Descriptions.Item label="訂單狀態">
                 <Tag color={getStatusColor(orderData.status)}>
@@ -322,6 +319,33 @@ const OrderTrackingPage = () => {
             />
             
             <Divider />
+            {/* 費用明細 */}
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <Text>商品小計：</Text>
+                <Text>NT$ {((orderData.items || []).reduce((sum, item) => sum + (item.quantity * item.price), 0)).toLocaleString()}</Text>
+              </div>
+            
+              
+              {/* 優惠券折扣 */}
+                {orderData.couponInfo && orderData.discountAmount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <Text style={{ color: '#52c41a' }}>
+                    優惠券折扣{orderData.couponInfo.name ? ` (${orderData.couponInfo.name})` : ''}：
+                  </Text>
+                  <Text style={{ color: '#52c41a' }}>-NT$ {orderData.discountAmount.toLocaleString()}</Text>
+                </div>
+              )}
+              
+              {/* 運費顯示 */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <Text>運費：</Text>
+                <Text>NT$ {(orderData.shippingFee || 100).toLocaleString()}</Text>
+              </div>
+              
+              <Divider style={{ margin: '12px 0' }} />
+            </div>
+            
             <div style={{ textAlign: 'right' }}>
               <Text strong style={{ fontSize: '18px' }}>
                 總計：NT$ {(orderData.total || 0).toLocaleString()}
