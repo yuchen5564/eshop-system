@@ -3,7 +3,8 @@ import { Menu } from 'antd';
 import { 
   HomeOutlined, 
   ShoppingOutlined, 
-  InfoCircleOutlined 
+  InfoCircleOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
 
 const NavigationMenu = ({ 
@@ -24,6 +25,12 @@ const NavigationMenu = ({
       label: '商品',
       icon: showIcons ? <ShoppingOutlined /> : null,
       onClick: () => onPageChange('products')
+    },
+    {
+      key: 'order-tracking',
+      label: '訂單查詢',
+      icon: showIcons ? <SearchOutlined /> : null,
+      onClick: () => onPageChange('order-tracking')
     },
     {
       key: 'about',

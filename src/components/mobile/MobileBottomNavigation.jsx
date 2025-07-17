@@ -4,7 +4,8 @@ import {
   HomeOutlined, 
   ShoppingOutlined, 
   ShoppingCartOutlined,
-  InfoCircleOutlined 
+  InfoCircleOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
 
 const MobileBottomNavigation = ({ 
@@ -35,9 +36,9 @@ const MobileBottomNavigation = ({
       label: '購物車'
     },
     {
-      key: 'about',
-      icon: <InfoCircleOutlined />,
-      label: '關於'
+      key: 'order-tracking',
+      icon: <SearchOutlined />,
+      label: '訂單查詢'
     }
   ];
 

@@ -135,6 +135,7 @@ const CheckoutPage = ({
           description: appliedCoupon.description
         } : null,
         total: totalAmount,
+        shippingFee: shippingFee,
         items: cart.map(item => ({
           id: item.id,
           name: item.name,

@@ -8,6 +8,7 @@ import ProductsPage from './pages/ProductsPage';
 import CartPage from './pages/CartPage';
 import AboutPage from './pages/AboutPage';
 import CheckoutPage from './pages/CheckoutPage';
+import OrderTrackingPage from './pages/OrderTrackingPage';
 import AdminApp from './admin/AdminApp';
 import AlertNotification, { useAlerts } from './components/AlertNotification';
 import LoginForm from './components/LoginForm';
@@ -299,6 +300,7 @@ const FarmEcommerce = () => {
           />
         )}
         {currentPage === 'about' && <AboutPage />}
+        {currentPage === 'order-tracking' && <OrderTrackingPage />}
         {currentPage === 'checkout' && (
           <CheckoutPage 
             cart={cart}

@@ -67,6 +67,32 @@ class OrderService extends FirestoreService {
       return { success: false, error: error.message };
     }
   }
+
+  // 根據訂單編號和電話號碼查詢訂單
+  async trackOrder(orderNumber, phone) {
+    try {
+      const allOrders = await this.getAll();
+      
+      if (!allOrders.success) {
+        return allOrders;
+      }
+      
+      const order = allOrders.data.find(o => 
+        o.id === orderNumber && o.customerPhone === phone
+      );
+      
+      if (!order) {
+        return { 
+          success: false, 
+          error: '找不到對應的訂單，請檢查訂單編號和電話號碼是否正確' 
+        };
+      }
+      
+      return { success: true, data: order };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
 }
 
 export default new OrderService();
