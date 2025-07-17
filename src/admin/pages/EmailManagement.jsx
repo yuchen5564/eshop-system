@@ -17,7 +17,9 @@ import {
   Alert,
   Tag,
   Statistic,
-  Spin
+  Spin,
+  Select,
+  DatePicker
 } from 'antd';
 import {
   MailOutlined,
@@ -30,13 +32,15 @@ import {
   CheckCircleOutlined,
   ExclamationCircleOutlined,
   ReloadOutlined,
-  EditOutlined
+  EditOutlined,
+  SearchOutlined,
+  FilterOutlined
 } from '@ant-design/icons';
 import { emailManagementService, emailTemplateService, emailLogService } from '../../services/emailManagementService';
 import { emailService } from '../../services/emailService';
 
 const { Title, Text, Paragraph } = Typography;
-const { TextArea } = Input;
+const { TextArea, Search } = Input;
 
 const EmailManagement = () => {
   const [activeTab, setActiveTab] = useState('config');
@@ -50,6 +54,12 @@ const EmailManagement = () => {
   const [emailTemplates, setEmailTemplates] = useState({});
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [pageSize, setPageSize] = useState(10); // 預設每頁10筆
+  
+  // 郵件記錄篩選狀態
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [dateRange, setDateRange] = useState([]);
 
   
   // 新增 - 編輯模板彈窗狀態
@@ -364,6 +374,42 @@ const EmailManagement = () => {
     }
   };
 
+  // 郵件狀態和類型選項定義
+  const emailStatusOptions = [
+    { value: 'sent', label: '已送達', color: 'green'},
+    { value: 'delivered', label: '已傳送', color: 'green' },
+    { value: 'failed', label: '失敗', color: 'red' },
+    { value: 'error', label: '錯誤', color: 'red' },
+    { value: 'pending', label: '發送中', color: 'orange' },
+    { value: 'skipped', label: '已跳過', color: 'gray' }
+  ];
+
+  const emailTypeOptions = [
+    { value: 'order_confirmation', label: '訂單確認', color: 'blue' },
+    { value: 'shipping_notification', label: '出貨通知', color: 'green' },
+    { value: 'new_order_admin', label: '新訂單', color: 'orange' },
+    { value: 'test', label: '測試', color: 'purple' }
+  ];
+
+  // 篩選後的郵件記錄
+  const filteredEmailLogs = emailLogs.filter(log => {
+    const matchesSearch = log.to?.toLowerCase().includes(searchText.toLowerCase()) ||
+                         log.subject?.toLowerCase().includes(searchText.toLowerCase()) ||
+                         log.messageId?.toLowerCase().includes(searchText.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || log.status === statusFilter;
+    const matchesType = typeFilter === 'all' || log.type === typeFilter;
+    
+    let matchesDate = true;
+    if (dateRange && dateRange.length === 2) {
+      const logDate = log.sentAt?.seconds ? new Date(log.sentAt.seconds * 1000) : new Date(log.sentAt);
+      const startDate = dateRange[0].startOf('day').toDate();
+      const endDate = dateRange[1].endOf('day').toDate();
+      matchesDate = logDate >= startDate && logDate <= endDate;
+    }
+    
+    return matchesSearch && matchesStatus && matchesType && matchesDate;
+  });
+
   // 郵件記錄表格列定義
   const logColumns = [
     {
@@ -417,16 +463,18 @@ const EmailManagement = () => {
       key: 'status',
       width: 80,
       render: (status) => {
-        const statusMap = {
-          'sent': { text: '已送達', color: 'green', icon: <CheckCircleOutlined /> },
-          'delivered': { text: '已送達', color: 'green', icon: <CheckCircleOutlined /> },
-          'failed': { text: '失敗', color: 'red', icon: <ExclamationCircleOutlined /> },
-          'error': { text: '錯誤', color: 'red', icon: <ExclamationCircleOutlined /> },
-          'pending': { text: '發送中', color: 'orange' },
-          'skipped': { text: '已跳過', color: 'gray' }
-        };
-        const info = statusMap[status] || { text: status, color: 'default' };
-        return <Tag color={info.color} icon={info.icon}>{info.text}</Tag>;
+        const statusOption = emailStatusOptions.find(option => option.value === status);
+        const info = statusOption || { label: status, color: 'default' };
+        
+        // 根據狀態添加圖標
+        let icon = null;
+        if (status === 'sent' || status === 'delivered') {
+          icon = <CheckCircleOutlined />;
+        } else if (status === 'failed' || status === 'error') {
+          icon = <ExclamationCircleOutlined />;
+        }
+        
+        return <Tag color={info.color} icon={icon}>{info.label}</Tag>;
       }
     },
     {
@@ -606,7 +654,6 @@ const EmailManagement = () => {
       ),
       children: (
         <Card>
-          {/* 郵件記錄部分保持原樣 */}
           <div style={{ marginBottom: '16px' }}>
             <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Title level={4}>郵件發送記錄</Title>
@@ -618,10 +665,75 @@ const EmailManagement = () => {
               </Button>
             </div>
           </div>
+
+          {/* 篩選器 */}
+          <Row gutter={16} style={{ marginBottom: '16px' }}>
+            <Col xs={24} sm={6}>
+              <Search
+                placeholder="搜尋收件人或主旨"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                style={{ width: '100%' }}
+              />
+            </Col>
+            <Col xs={12} sm={4}>
+              <Select
+                placeholder="郵件狀態"
+                value={statusFilter}
+                onChange={setStatusFilter}
+                style={{ width: '100%' }}
+              >
+                <Select.Option value="all">全部狀態</Select.Option>
+                {emailStatusOptions.map(option => (
+                  <Select.Option key={option.value} value={option.value}>
+                    {option.label}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Col>
+            <Col xs={12} sm={4}>
+              <Select
+                placeholder="郵件類型"
+                value={typeFilter}
+                onChange={setTypeFilter}
+                style={{ width: '100%' }}
+              >
+                <Select.Option value="all">全部類型</Select.Option>
+                {emailTypeOptions.map(option => (
+                  <Select.Option key={option.value} value={option.value}>
+                    {option.label}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Col>
+            <Col xs={24} sm={6}>
+              <DatePicker.RangePicker
+                placeholder={['開始日期', '結束日期']}
+                value={dateRange}
+                onChange={setDateRange}
+                style={{ width: '100%' }}
+                format="YYYY-MM-DD"
+              />
+            </Col>
+            <Col xs={24} sm={4}>
+              <Button 
+                icon={<FilterOutlined />} 
+                onClick={() => {
+                  setSearchText('');
+                  setStatusFilter('all');
+                  setTypeFilter('all');
+                  setDateRange([]);
+                }}
+                style={{ width: '100%' }}
+              >
+                清除篩選
+              </Button>
+            </Col>
+          </Row>
           
           <Table
             columns={logColumns}
-            dataSource={emailLogs}
+            dataSource={filteredEmailLogs}
             rowKey="id"
             pagination={{
               pageSize: pageSize,
