@@ -179,6 +179,12 @@ const OrderManagement = () => {
     return method ? method.label : paymentMethodId; // 找不到時顯示原始ID
   };
 
+  // 獲取貨運公司顯示標籤的輔助函數
+  const getShippingCarrierLabel = (carrierId) => {
+    const carrier = shippingCarriers.find(carrier => carrier.value === carrierId);
+    return carrier ? carrier.label : carrierId; // 找不到時顯示原始ID
+  };
+
   const loadOrders = async () => {
     setLoading(true);
     try {
@@ -404,7 +410,7 @@ const OrderManagement = () => {
         order.shippingAddress,
         getPaymentMethodLabel(order.paymentMethod),
         order.shippingInfo ? '已出貨' : '未出貨',
-        order.shippingInfo?.carrier || '',
+        order.shippingInfo?.carrier ? getShippingCarrierLabel(order.shippingInfo.carrier) : '',
         order.shippingInfo?.trackingNumber || '',
         itemsDetail
       ];
@@ -767,7 +773,7 @@ const OrderManagement = () => {
             {selectedOrder.shippingInfo && (
               <>
                 <Descriptions title="出貨資訊" bordered column={2}>
-                  <Descriptions.Item label="貨運公司">{selectedOrder.shippingInfo.carrier}</Descriptions.Item>
+                  <Descriptions.Item label="貨運公司">{getShippingCarrierLabel(selectedOrder.shippingInfo.carrier)}</Descriptions.Item>
                   <Descriptions.Item label="追蹤編號">{selectedOrder.shippingInfo.trackingNumber}</Descriptions.Item>
                   <Descriptions.Item label="出貨時間">
                     {new Date(selectedOrder.shippingInfo.shippedDate).toLocaleString('zh-TW')}
