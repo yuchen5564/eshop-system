@@ -289,7 +289,8 @@ const CheckoutPage = ({
                 </Form.Item>
               </Col>
             </Row>
-
+            <Alert message="本站商品一律經由貨運出貨，如有特殊需求請於備註欄填寫相關資訊。" type="warning" showIcon />
+            <Divider />
             <Form.Item name="notes" label="備註">
               <TextArea rows={3} placeholder="配送備註（選填）" />
             </Form.Item>

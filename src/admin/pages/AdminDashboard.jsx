@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Statistic, Progress, Typography, Space, Table, Button, Spin } from 'antd';
+import { Row, Col, Card, Statistic, Progress, Typography, Space, Table, Button, Spin, Alert } from 'antd';
 import {
   ShoppingOutlined,
   DollarOutlined,
@@ -370,19 +370,7 @@ const AdminDashboard = () => {
                   {loading ? '-' : stats.activeCoupons}
                 </Text>
               </div>
-              <div 
-                style={{ 
-                  marginTop: '16px', 
-                  padding: '12px', 
-                  background: '#f6ffed', 
-                  border: '1px solid #b7eb8f', 
-                  borderRadius: '6px' 
-                }}
-              >
-                <Text style={{ fontSize: '12px', color: '#389e0d' }}>
-                  📊 數據每次進入頁面時自動更新
-                </Text>
-              </div>
+                <Alert message="📊 數據每次進入頁面時自動更新" type="success" />
             </Space>
           </Card>
         </Col>
