@@ -31,6 +31,7 @@ import {
 import emailService from '../../services/emailService';
 import orderService from '../../services/orderService';
 import { logisticsService } from '../../services/logisticsService';
+import paymentService from '../../services/paymentService';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -63,6 +64,7 @@ const OrderManagement = () => {
   const [dateRange, setDateRange] = useState([]);
   const [emailSending, setEmailSending] = useState(false);
   const [shippingCarriers, setShippingCarriers] = useState([]);
+  const [paymentMethods, setPaymentMethods] = useState([]);
   const [pageSize, setPageSize] = useState(10); // 預設每頁10筆
 
 
@@ -70,7 +72,43 @@ const OrderManagement = () => {
   useEffect(() => {
     loadOrders();
     loadShippingCarriers();
+    loadPaymentMethods();
   }, []);
+
+  const loadPaymentMethods = async () => {
+    try {
+      const result = await paymentService.getAll();
+      if (result.success && result.data.length > 0) {
+        // 將資料庫格式轉換為組件需要的格式
+        const formattedMethods = result.data.map(method => ({
+          value: method.id,
+          label: method.name,
+          icon: method.icon || '💳'
+        }));
+        setPaymentMethods(formattedMethods);
+        console.log('已載入付款方式:', formattedMethods);
+      } else {
+        console.log('資料庫中沒有付款方式，使用預設選項');
+        // 如果資料庫中沒有資料，使用預設選項
+        const defaultMethods = [
+          { value: 'credit_card', label: '信用卡付款', icon: '💳' },
+          { value: 'bank_transfer', label: '銀行轉帳', icon: '🏦' },
+          { value: 'cash_on_delivery', label: '貨到付款', icon: '💰' }
+        ];
+        setPaymentMethods(defaultMethods);
+      }
+    } catch (error) {
+      console.error('載入付款方式失敗:', error);
+      // 發生錯誤時使用預設選項
+      const defaultMethods = [
+        { value: 'credit_card', label: '信用卡付款', icon: '💳' },
+        { value: 'bank_transfer', label: '銀行轉帳', icon: '🏦' },
+        { value: 'cash_on_delivery', label: '貨到付款', icon: '💰' }
+      ];
+      setPaymentMethods(defaultMethods);
+      message.warning('載入付款方式失敗，使用預設選項');
+    }
+  };
 
   const loadShippingCarriers = async () => {
     try {
@@ -133,6 +171,12 @@ const OrderManagement = () => {
       setShippingCarriers(defaultCarriers);
       message.warning('載入物流選項失敗，使用預設選項');
     }
+  };
+
+  // 獲取付款方式顯示標籤的輔助函數
+  const getPaymentMethodLabel = (paymentMethodId) => {
+    const method = paymentMethods.find(method => method.value === paymentMethodId);
+    return method ? method.label : paymentMethodId; // 找不到時顯示原始ID
   };
 
   const loadOrders = async () => {
@@ -358,7 +402,7 @@ const OrderManagement = () => {
         paymentStatusOptions.find(opt => opt.value === order.paymentStatus)?.label || order.paymentStatus,
         new Date(order.orderDate).toLocaleString('zh-TW'),
         order.shippingAddress,
-        order.paymentMethod,
+        getPaymentMethodLabel(order.paymentMethod),
         order.shippingInfo ? '已出貨' : '未出貨',
         order.shippingInfo?.carrier || '',
         order.shippingInfo?.trackingNumber || '',
@@ -709,13 +753,13 @@ const OrderManagement = () => {
                   {paymentStatusOptions.find(opt => opt.value === selectedOrder.paymentStatus)?.label}
                 </Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="付款方式">{selectedOrder.paymentMethod}</Descriptions.Item>
+              <Descriptions.Item label="付款方式">
+                {getPaymentMethodLabel(selectedOrder.paymentMethod)}
+              </Descriptions.Item>
               <Descriptions.Item label="訂單總額">
                 <Text strong style={{ color: '#52c41a' }}>NT$ {selectedOrder.total.toLocaleString()}</Text>
               </Descriptions.Item>
-              {selectedOrder.notes && (
-                <Descriptions.Item label="備註" span={2}>{selectedOrder.notes}</Descriptions.Item>
-              )}
+              <Descriptions.Item label="備註" span={2}>{selectedOrder.notes}</Descriptions.Item>
             </Descriptions>
 
             <Divider />
