@@ -765,6 +765,12 @@ const OrderManagement = () => {
               <Descriptions.Item label="訂單總額">
                 <Text strong style={{ color: '#52c41a' }}>NT$ {selectedOrder.total.toLocaleString()}</Text>
               </Descriptions.Item>
+              <Descriptions.Item label="優惠券">
+                {selectedOrder.couponInfo?.name || '無'}
+              </Descriptions.Item>
+              <Descriptions.Item label="折價金額">
+                <Text strong style={{ color: '#c41a1aff' }}>NT$ {(selectedOrder.discountAmount || 0).toLocaleString()}</Text>
+              </Descriptions.Item>
               <Descriptions.Item label="備註" span={2}>{selectedOrder.notes}</Descriptions.Item>
             </Descriptions>
 
