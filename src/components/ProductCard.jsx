@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, Space } from 'antd';
-import { ProductImage, ProductInfo, ProductPrice, AddToCartButton } from './product';
+import { ProductImage, ProductInfo, ProductPrice, AddToCartButton, AddToCartModal } from './product';
 
 const { Meta } = Card;
 
 const ProductCard = ({ product, onAddToCart }) => {
+  const [modalVisible, setModalVisible] = useState(false);
+  
   const discount = product.originalPrice > product.price 
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
@@ -22,7 +24,7 @@ const ProductCard = ({ product, onAddToCart }) => {
       actions={[
         <AddToCartButton 
           product={product}
-          onAddToCart={onAddToCart}
+          onAddToCart={() => setModalVisible(true)}
         />
       ]}
     >
@@ -36,6 +38,13 @@ const ProductCard = ({ product, onAddToCart }) => {
             />
           </Space>
         }
+      />
+      
+      <AddToCartModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        product={product}
+        onAddToCart={onAddToCart}
       />
     </Card>
   );

@@ -95,11 +95,11 @@ const FarmEcommerce = () => {
     return matchesSearch && matchesCategory && isActive;
   });
 
-  const addToCart = (product) => {
+  const addToCart = (product, quantity = 1) => {
     const existing = cart.find(item => item.id === product.id);
     
     if (existing) {
-      const newQuantity = existing.quantity + 1;
+      const newQuantity = existing.quantity + quantity;
       setCart(prev => prev.map(item =>
         item.id === product.id
           ? { ...item, quantity: newQuantity }
@@ -107,7 +107,7 @@ const FarmEcommerce = () => {
       ));
       addSuccessAlert(product, true, newQuantity);
     } else {
-      setCart(prev => [...prev, { ...product, quantity: 1 }]);
+      setCart(prev => [...prev, { ...product, quantity }]);
       addSuccessAlert(product, false);
     }
   };

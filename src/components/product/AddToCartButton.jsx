@@ -7,7 +7,7 @@ const AddToCartButton = ({ product, onAddToCart, disabled = false }) => {
     <Button 
       type="primary" 
       icon={<PlusOutlined />}
-      onClick={() => onAddToCart(product)}
+      onClick={onAddToCart}
       size="large"
       disabled={disabled || product.stock === 0}
     >
