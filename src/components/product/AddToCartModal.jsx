@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Space, Button, Typography } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import QuantitySelector from './QuantitySelector';
+import { EnvironmentOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -70,7 +71,7 @@ const AddToCartModal = ({
         {/* 商品資訊 */}
         <div style={{ textAlign: 'center' }}>
           <Title level={4} style={{ margin: '8px 0' }}>{product.name}</Title>
-          <Text type="secondary">{product.farm} • {product.location}</Text>
+          <EnvironmentOutlined /> <Text type="secondary">{product.farm} • {product.location}</Text>
         </div>
         
         {/* 價格資訊 */}

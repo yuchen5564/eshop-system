@@ -1,5 +1,6 @@
 import React from 'react';
-import { InputNumber } from 'antd';
+import { InputNumber, Button, Space } from 'antd';
+import { MinusOutlined, PlusOutlined } from '@ant-design/icons';
 
 const QuantitySelector = ({ 
   quantity, 
@@ -15,20 +16,45 @@ const QuantitySelector = ({
     }
   };
 
+  const handleDecrease = () => {
+    const newValue = quantity - 1;
+    if (newValue >= min) {
+      onQuantityChange(newValue);
+    }
+  };
+
+  const handleIncrease = () => {
+    const newValue = quantity + 1;
+    if (newValue <= Math.min(max, stock)) {
+      onQuantityChange(newValue);
+    }
+  };
+
   return (
-    <InputNumber
-      value={quantity}
-      onChange={handleInputChange}
-      min={min}
-      max={Math.min(max, stock)}
-      disabled={disabled}
-      size="small"
-      controls={true}
-      style={{ 
-        width: '80px', 
-        textAlign: 'center'
-      }}
-    />
+    <Space align="center">
+      <Button 
+        icon={<MinusOutlined />}
+        onClick={handleDecrease}
+        disabled={disabled || quantity <= min}
+        size="small"
+      />
+      <InputNumber 
+        min={min}
+        max={Math.min(max, stock)}
+        value={quantity}
+        onChange={handleInputChange}
+        disabled={disabled}
+        style={{ width: '60px' }}
+        size="small"
+        controls={false}
+      />
+      <Button 
+        icon={<PlusOutlined />}
+        onClick={handleIncrease}
+        disabled={disabled || quantity >= Math.min(max, stock)}
+        size="small"
+      />
+    </Space>
   );
 };
 

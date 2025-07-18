@@ -30,12 +30,7 @@ const Header = ({
           <Logo />
         </Col>
         
-        <Col flex="auto" style={{ maxWidth: '500px', margin: '0 40px' }}>
-          <SearchBar 
-            searchTerm={searchTerm}
-            onSearchChange={onSearchChange}
-          />
-        </Col>
+
         
         <Col>
           <Space size="large">
