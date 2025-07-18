@@ -243,10 +243,9 @@ const UserManagement = () => {
       key: 'role',
       width: 100,
       render: (role) => (
-        <Tag color={role === 'super_admin' ? 'red' : role === 'admin' ? 'blue' : 'default'}>
-          {role === 'super_admin' ? '超級管理員' : 
-           role === 'admin' ? '管理員' : 
-           role === 'moderator' ? '審核員' : '用戶'}
+        <Tag color={role === 'admin' ? 'blue' : role === 'moderator' ? 'orange' : 'default'}>
+          {role === 'admin' ? '管理員' : 
+           role === 'moderator' ? '審核員' : '一般用戶'}
         </Tag>
       )
     },
@@ -468,7 +467,35 @@ const UserManagement = () => {
                 label="用戶角色"
                 rules={[{ required: true, message: '請選擇用戶角色' }]}
               >
-                <Select placeholder="請選擇用戶角色">
+                <Select 
+                  placeholder="請選擇用戶角色"
+                  onChange={(value) => {
+                    // 當角色變更時，自動設定預設權限
+                    const rolePermissions = {
+                      'admin': [
+                        'user_management',
+                        'product_management',
+                        'order_management', 
+                        'category_management',
+                        'coupon_management',
+                        'email_management',
+                        'logistics_management',
+                        'payment_management',
+                        'system_settings'
+                      ],
+                      'moderator': [
+                        'product_management',
+                        'order_management',
+                        'category_management'
+                      ],
+                      'user': []
+                    };
+                    
+                    form.setFieldsValue({
+                      permissions: rolePermissions[value] || []
+                    });
+                  }}
+                >
                   <Option value="admin">管理員</Option>
                   <Option value="moderator">審核員</Option>
                   <Option value="user">一般用戶</Option>

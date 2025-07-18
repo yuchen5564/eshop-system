@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminHeader from './components/AdminHeader';
 import AdminSidebar from './components/AdminSidebar';
+import ProtectedRoute from './components/ProtectedRoute';
 import { AdminLayout } from './components/ui';
 import AdminDashboard from './pages/AdminDashboard';
 import OrderManagement from './pages/OrderManagement';
@@ -14,11 +15,16 @@ import UserManagement from './pages/UserManagement';
 import SystemSettings from './pages/SystemSettings';
 import { EmptyState } from '../components/common';
 import { useResponsive } from '../hooks/useBreakpoint';
+import { useAuth } from '../contexts/AuthContext';
+import { useAdminUser } from '../hooks/useAdminUser';
+import permissionService from '../services/permissionService';
 
 const AdminApp = ({ onBackToSite }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedMenu, setSelectedMenu] = useState('dashboard');
   const { isMobile } = useResponsive();
+  const { user } = useAuth();
+  const { adminUser, loading } = useAdminUser();
 
   // 在移動端預設收合側邊欄
   useEffect(() => {
@@ -41,23 +47,59 @@ const AdminApp = ({ onBackToSite }) => {
   const renderContent = () => {
     switch (selectedMenu) {
       case 'dashboard':
-        return <AdminDashboard />;
+        return (
+          <ProtectedRoute pageKey="dashboard" user={adminUser}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        );
       case 'orders':
-        return <OrderManagement />;
+        return (
+          <ProtectedRoute pageKey="order-management" user={adminUser}>
+            <OrderManagement />
+          </ProtectedRoute>
+        );
       case 'products':
-        return <ProductManagement />;
+        return (
+          <ProtectedRoute pageKey="product-management" user={adminUser}>
+            <ProductManagement />
+          </ProtectedRoute>
+        );
       case 'categories':
-        return <CategoryManagement />;
+        return (
+          <ProtectedRoute pageKey="category-management" user={adminUser}>
+            <CategoryManagement />
+          </ProtectedRoute>
+        );
       case 'payments':
-        return <PaymentManagement />;
+        return (
+          <ProtectedRoute pageKey="payment-management" user={adminUser}>
+            <PaymentManagement />
+          </ProtectedRoute>
+        );
       case 'emails':
-        return <EmailManagement />;
+        return (
+          <ProtectedRoute pageKey="email-management" user={adminUser}>
+            <EmailManagement />
+          </ProtectedRoute>
+        );
       case 'coupons':
-        return <CouponManagement />;
+        return (
+          <ProtectedRoute pageKey="coupon-management" user={adminUser}>
+            <CouponManagement />
+          </ProtectedRoute>
+        );
       case 'logistics':
-        return <LogisticsManagement />;
+        return (
+          <ProtectedRoute pageKey="logistics-management" user={adminUser}>
+            <LogisticsManagement />
+          </ProtectedRoute>
+        );
       case 'users':
-        return <UserManagement />;
+        return (
+          <ProtectedRoute pageKey="user-management" user={adminUser}>
+            <UserManagement />
+          </ProtectedRoute>
+        );
       case 'analytics':
         return (
           <EmptyState 
@@ -67,11 +109,33 @@ const AdminApp = ({ onBackToSite }) => {
           />
         );
       case 'settings':
-        return <SystemSettings />;
+        return (
+          <ProtectedRoute pageKey="system-settings" user={adminUser}>
+            <SystemSettings />
+          </ProtectedRoute>
+        );
       default:
-        return <AdminDashboard />;
+        return (
+          <ProtectedRoute pageKey="dashboard" user={adminUser}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        );
     }
   };
+
+  // 如果還在加載用戶資料，顯示加載狀態
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <div>載入中...</div>
+      </div>
+    );
+  }
 
   return (
     <AdminLayout
@@ -96,6 +160,7 @@ const AdminApp = ({ onBackToSite }) => {
           selectedKey={selectedMenu}
           onMenuSelect={handleMenuSelect}
           collapsed={collapsed}
+          currentUser={adminUser}
           onBreakpoint={(broken) => {
             if (broken) {
               setCollapsed(true);
