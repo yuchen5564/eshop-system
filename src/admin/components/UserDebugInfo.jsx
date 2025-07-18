@@ -20,7 +20,7 @@ const UserDebugInfo = () => {
   const accessiblePages = permissionService.getAccessiblePages(adminUser);
 
   return (
-    <Card title="用戶調試信息" style={{ margin: '20px' }}>
+    <Card title="用戶調試信息" >
       <div style={{ marginBottom: '16px' }}>
         <Title level={5}>基本信息</Title>
         <p><strong>Email:</strong> {adminUser.email}</p>
@@ -62,9 +62,7 @@ const UserDebugInfo = () => {
           size="small"
           dataSource={accessiblePages}
           renderItem={(page) => (
-            <List.Item>
               <Tag color="cyan">{page}</Tag>
-            </List.Item>
           )}
         />
       </div>

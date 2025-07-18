@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Button, Typography, Space, Alert, Divider, message } from 'antd';
 import { DatabaseOutlined, ReloadOutlined, WarningOutlined } from '@ant-design/icons';
+import UserDebugInfo from '../components/UserDebugInfo';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -33,8 +34,19 @@ const SystemSettings = () => {
             <Text strong>認證：</Text>
             <Text>Firebase Authentication</Text>
           </div>
+          <div>
+            <Text strong>信件服務：</Text>
+            <Text>Google App Script</Text>
+          </div>
         </Space>
       </Card>
+
+      <div style={{ marginTop: '24px' }}>
+
+      <UserDebugInfo />
+
+      </div>
+
     </div>
   );
 };
