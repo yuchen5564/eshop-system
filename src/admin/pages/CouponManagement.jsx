@@ -394,6 +394,8 @@ const CouponManagement = () => {
             icon={<ReloadOutlined />}
             onClick={() => {
               loadCoupons();
+              loadStats();
+              loadCategories();
             }}
           >
             刷新

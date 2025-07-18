@@ -621,6 +621,8 @@ const OrderManagement = () => {
             icon={<ReloadOutlined />}
             onClick={() => {
               loadOrders();
+              loadShippingCarriers();
+              loadPaymentMethods();
             }}
           >
             刷新

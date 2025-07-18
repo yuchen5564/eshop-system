@@ -659,7 +659,12 @@ const EmailManagement = () => {
               <Title level={4}>郵件發送記錄</Title>
               <Button
                 icon={<ReloadOutlined />}
-                onClick={loadEmailLogs}
+                onClick={() => {
+                  loadEmailLogs();
+                  loadEmailSettings();
+                  loadEmailStats();
+                  loadEmailTemplates();
+                }}
               >
                 刷新
               </Button>
